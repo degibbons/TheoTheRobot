@@ -1,23 +1,10 @@
 import os
-import ControlTable
+from ControlTable import *
+from dynamixel_sdk import *
+import numpy as np
+import copy as cp
 
 def InitialSetup():
-    if os.name == 'nt':
-        import msvcrt
-        def getch():
-            return msvcrt.getch().decode()
-    else:
-        import sys, tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        def getch():
-            try:
-                tty.setraw(sys.stdin.fileno())
-                ch = sys.stdin.read(1)
-            finally:
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            return ch
-
     # Initialize PortHandler instance
     # Set the port path
     # Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -46,6 +33,8 @@ def InitialSetup():
         print("Press any key to terminate...")
         getch()
         quit()
+
+    return portHandler, packetHandler
 
 def TurnOffOnTorque(OnOrOff,AllOrOne,StartServo,EndServo):
     if (AllOrOne == 1):
@@ -143,7 +132,6 @@ def SetServoTraits(ServoID):
     else:
         print("[ID:%03d] Moving accuracy set to high: %03d" %(ServoID, MOVING_THRESHOLD_ACCURACY_H))
 
-
 def SetSingleServoVelocity(ServoID,ServoVel):
     #Set velocity limit 
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_H)
@@ -154,7 +142,7 @@ def SetSingleServoVelocity(ServoID,ServoVel):
     else:
         print("[ID:%03d] Velocity limit set to: %03d" %(ServoID, VELOCITY_LIMIT_H))
 
-def MoveSingleServo(ServoID,DesPos,DesSpeed,DisplayData):
+def MoveSingleServo(ServoID,DesPos):
     # Write goal position
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_PRO_GOAL_POSITION, DesPos)
     if dxl_comm_result != COMM_SUCCESS:
@@ -163,8 +151,6 @@ def MoveSingleServo(ServoID,DesPos,DesSpeed,DisplayData):
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     else:
         print("[ID:%03d] Goal Position set to: %03d" %(ServoID, DesPos))
-
-
 
 def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
     # Initialize GroupSyncWrite instance
@@ -236,9 +222,6 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
 
     elif (DesiredLimb == 7):
         limb = TAIL
-
-    # Remove this and put in master script only once before loop
-    TurnOffOnTorque(TORQUE_ENABLE,1,limb[0],limb[-1])
 
     if (DesiredLimb == 1 or DesiredLimb == 2 or DesiredLimb == 3 or DesiredLimb == 4):
         index = 0
@@ -407,12 +390,14 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
 def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix):
     MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0)
 
-def MoveRobotHome(PositionMatrix,SpeedMatrix):
+def MoveLimbsHome(PositionMatrix,SpeedMatrix):
     MoveLimbHome(1,PositionMatrix,SpeedMatrix,0)
     MoveLimbHome(2,PositionMatrix,SpeedMatrix,0)
     MoveLimbHome(3,PositionMatrix,SpeedMatrix,0)
     MoveLimbHome(4,PositionMatrix,SpeedMatrix,0)
 
+def StraightenSpine():
+    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0)
 
 def MoveEntireBody(PositionMatrix,SpeedMatrix):
     index = 1
@@ -427,10 +412,6 @@ def MoveEntireBody(PositionMatrix,SpeedMatrix):
         print("Press any key to continue! (or press ESC to quit!)")
         if getch() == chr(0x1b):
             break
-
-def ReturnRelevantData():
-    pass
-
 
 def DetermineSpeeds(StrideTime,positionsFile):
     import numpy as np
@@ -673,15 +654,26 @@ def PostProcessPositions():
 
     return FL_TOT, HL_TOT
 
+def PrintUserMenu():
+    print("\nWhat would you like to do?\n")
+    print("---------MENU---------")
+    print("1: Move a single servo")
+    print("2: Move a specific limb")
+    print("3: Move the entire robot")
+    print("4: Other")
+    print("5: Exit\n")
 
-def ExtractInfo():
+def ReturnRelevantData(DesiredData,DesiredServo):
     pass
 
+def WriteDataToDoc():
+    pass
 
 def ChangeSpecificTrait():
     pass
 
-
-
-def CleanUp():
-    pass
+def CleanUp(number_of_servos_connected):
+    TurnOffOnTorque(TORQUE_OFF,1,1,number_of_servos_connected)
+    print("Shutting down system.\n")
+    print("Thank you for using Theo!")
+    

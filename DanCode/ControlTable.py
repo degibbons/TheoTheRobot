@@ -7,6 +7,9 @@ ADDR_VELOCITY_LIMIT         = 44            #4
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
+# Positions File Name
+PositionsFile = "KinematicsTiming3.xlsx"
+
 # Default setting
 DXL_ID = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
 DXL1_ID = 1
@@ -46,8 +49,8 @@ BAUDRATE                    = 1000000             # Dynamixel default baudrate :
 DEVICENAME                  = '/dev/ttyUSB0'    # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
-TORQUE_ENABLE               = 1                 # Value for enabling the torque
-TORQUE_DISABLE              = 0                 # Value for disabling the torque
+TORQUE_ON               = 1                 # Value for enabling the torque
+TORQUE_OFF              = 0                 # Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE  = 10           # Dynamixel will rotate between this value
 DXL_MAXIMUM_POSITION_VALUE  = 4000            # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
 DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status threshold
@@ -71,7 +74,7 @@ HL_SW_R_2 = [2045, 1989, 1975, 2022, 2077, 2077, 2137, 2389, 2223, 1885, 1855]
 HL_SW_R_3 = [1660, 1297, 1171, 1225, 1234, 1136, 1136, 1378, 1737, 2039, 1978]
 HL_SW_R_4 = [2380, 2736, 2835, 2791, 2785, 2547, 2546, 2467, 2519, 2573, 2620]
 ## Hindlimb Total Stride Right
-HL_TOT_R_1 = HL_ST_R_1 + HL_SW_R_
+HL_TOT_R_1 = HL_ST_R_1 + HL_SW_R_1
 HL_TOT_R_2 = HL_ST_R_2 + HL_SW_R_2
 HL_TOT_R_3 = HL_ST_R_3 + HL_SW_R_3
 HL_TOT_R_4 = HL_ST_R_4 + HL_SW_R_4
@@ -124,3 +127,8 @@ FL_TOT_L_2 = FL_ST_L_2 + FL_SW_L_2
 FL_TOT_L_3 = FL_ST_L_3 + FL_SW_L_3
 FL_TOT_L_4 = FL_ST_L_4 + FL_SW_L_4
 
+
+STRAIGHT_SPINE = 2048
+STRAIGHT_SPEED = 50
+STRAIGHT_SPINE_ARRAY = [STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE]
+STRAIGHT_SPEED_ARRAY = [STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED]
