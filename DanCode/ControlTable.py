@@ -3,12 +3,25 @@ ADDR_PRO_TORQUE_ENABLE      = 64               # Control table address is differ
 ADDR_PRO_GOAL_POSITION      = 116
 ADDR_PRO_PRESENT_POSITION   = 132
 ADDR_VELOCITY_LIMIT         = 44            #4
+ADDR_DRIVE_MODE             = 10            #1          0       # |0=vELOCITY BASED| 1=TIME_BASED|
+DRIVE_MODE_VEL_BASED        = 0            #establish default drive mode, time or vel based
+ADDR_OPERATING_MODE         = 11            #1          3       # |0	Current Control Mode	DYNAMIXEL only controls current(torque) regardless of speed and position. This mode is ideal for a gripper or a system that only uses current(torque) control or a system that has additional velocity/position controllers.
+OPERATING_JOINT_POSITION_MODE = 3
+ADDR_ACCELERATION_LIMIT     = 40            #4          32767
+ACCELERATION_LIMIT_M        = 1000
+ADDR_MAX_POSITION_LIMIT     = 48            #4          4095
+ADDR_MIN_POSITION_LIMIT     = 52            #4          0
+MAX_POSITION_LIMIT          = 4095
+MIN_POSITION_LIMIT          = 0
+ADDR_MOVING_THRESHOLD       = 24            #4          10      #ESSENTIALLY ACCURACY TOLERANCE
+MOVING_THRESHOLD_ACCURACY_H = 1
+VELOCITY_LIMIT_H            = 1023
 
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
 # Positions File Name
-PositionsFile = "KinematicsTiming3.xlsx"
+PositionsFile = "KinematicsTiming4.csv"
 
 # Default setting
 DXL_ID = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]

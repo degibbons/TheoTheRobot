@@ -36,7 +36,7 @@ def InitialSetup():
 
     return portHandler, packetHandler
 
-def TurnOffOnTorque(OnOrOff,AllOrOne,StartServo,EndServo):
+def TurnOffOnTorque(OnOrOff,AllOrOne,StartServo,EndServo,portHandler,packetHandler):
     if (AllOrOne == 1):
         index = range(StartServo,EndServo + 1)
     elif (AllOrOne == 0):
@@ -77,7 +77,7 @@ def RotatePositionArray(inArray,shiftNum,arrayLength):
         inArray[j] = temp
     return inArray
 
-def SetServoTraits(ServoID):
+def SetServoTraits(ServoID,portHandler,packetHandler):
     #Set drive mode to velocity based
     dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, ServoID, ADDR_DRIVE_MODE, DRIVE_MODE_VEL_BASED)
     if dxl_comm_result != COMM_SUCCESS:
@@ -132,7 +132,7 @@ def SetServoTraits(ServoID):
     else:
         print("[ID:%03d] Moving accuracy set to high: %03d" %(ServoID, MOVING_THRESHOLD_ACCURACY_H))
 
-def SetSingleServoVelocity(ServoID,ServoVel):
+def SetSingleServoVelocity(ServoID,ServoVel,portHandler,packetHandler):
     #Set velocity limit 
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_H)
     if dxl_comm_result != COMM_SUCCESS:
@@ -142,7 +142,7 @@ def SetSingleServoVelocity(ServoID,ServoVel):
     else:
         print("[ID:%03d] Velocity limit set to: %03d" %(ServoID, VELOCITY_LIMIT_H))
 
-def MoveSingleServo(ServoID,DesPos):
+def MoveSingleServo(ServoID,DesPos,portHandler,packetHandler):
     # Write goal position
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_PRO_GOAL_POSITION, DesPos)
     if dxl_comm_result != COMM_SUCCESS:
@@ -152,7 +152,7 @@ def MoveSingleServo(ServoID,DesPos):
     else:
         print("[ID:%03d] Goal Position set to: %03d" %(ServoID, DesPos))
 
-def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
+def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,packetHandler):
     # Initialize GroupSyncWrite instance
     groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
@@ -170,10 +170,10 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
         ServoPos3 = PositionMatrix[indexIn,2]
         ServoPos4 = PositionMatrix[indexIn,3]
 
-        ServoVel1 = SpeedMatrix[indexIn,0]
-        ServoVel2 = SpeedMatrix[indexIn,1]
-        ServoVel3 = SpeedMatrix[indexIn,2]
-        ServoVel4 = SpeedMatrix[indexIn,3]
+        ServoVel1 = int(SpeedMatrix[indexIn,0])
+        ServoVel2 = int(SpeedMatrix[indexIn,1])
+        ServoVel3 = int(SpeedMatrix[indexIn,2])
+        ServoVel4 = int(SpeedMatrix[indexIn,3])
 
     elif (DesiredLimb == 2):
         limb = F_L_ARM
@@ -183,10 +183,10 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
         ServoPos3 = PositionMatrix[indexIn,6]
         ServoPos4 = PositionMatrix[indexIn,7]
 
-        ServoVel1 = SpeedMatrix[indexIn,4]
-        ServoVel2 = SpeedMatrix[indexIn,5]
-        ServoVel3 = SpeedMatrix[indexIn,6]
-        ServoVel4 = SpeedMatrix[indexIn,7]
+        ServoVel1 = int(SpeedMatrix[indexIn,4])
+        ServoVel2 = int(SpeedMatrix[indexIn,5])
+        ServoVel3 = int(SpeedMatrix[indexIn,6])
+        ServoVel4 = int(SpeedMatrix[indexIn,7])
                 
     elif (DesiredLimb == 3):
         limb = B_R_ARM
@@ -196,10 +196,10 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
         ServoPos3 = PositionMatrix[indexIn,10]
         ServoPos4 = PositionMatrix[indexIn,11]
 
-        ServoVel1 = SpeedMatrix[indexIn,8]
-        ServoVel2 = SpeedMatrix[indexIn,9]
-        ServoVel3 = SpeedMatrix[indexIn,10]
-        ServoVel4 = SpeedMatrix[indexIn,11]
+        ServoVel1 = int(SpeedMatrix[indexIn,8])
+        ServoVel2 = int(SpeedMatrix[indexIn,9])
+        ServoVel3 = int(SpeedMatrix[indexIn,10])
+        ServoVel4 = int(SpeedMatrix[indexIn,11])
         
     elif (DesiredLimb == 4):
         limb = B_L_ARM
@@ -209,10 +209,10 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
         ServoPos3 = PositionMatrix[indexIn,14]
         ServoPos4 = PositionMatrix[indexIn,15]
         
-        ServoVel1 = SpeedMatrix[indexIn,12]
-        ServoVel2 = SpeedMatrix[indexIn,13]
-        ServoVel3 = SpeedMatrix[indexIn,14]
-        ServoVel4 = SpeedMatrix[indexIn,15]
+        ServoVel1 = int(SpeedMatrix[indexIn,12])
+        ServoVel2 = int(SpeedMatrix[indexIn,13])
+        ServoVel3 = int(SpeedMatrix[indexIn,14])
+        ServoVel4 = int(SpeedMatrix[indexIn,15])
 
     elif (DesiredLimb == 5):
         limb - NECK
@@ -249,10 +249,10 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
             print("[ID:%03d] groupSyncRead addparam failed" % limb[3])
             quit()
 
-        goal_velocity_1 = [DXL_LOBYTE(DXL_LOWORD(ServoVel1[index])), DXL_HIBYTE(DXL_LOWORD(ServoVel1[index])), DXL_LOBYTE(DXL_HIWORD(ServoVel1[index])), DXL_HIBYTE(DXL_HIWORD(ServoVel1[index]))]
-        goal_velocity_2 = [DXL_LOBYTE(DXL_LOWORD(ServoVel2[index])), DXL_HIBYTE(DXL_LOWORD(ServoVel2[index])), DXL_LOBYTE(DXL_HIWORD(ServoVel2[index])), DXL_HIBYTE(DXL_HIWORD(ServoVel2[index]))]
-        goal_velocity_3 = [DXL_LOBYTE(DXL_LOWORD(ServoVel3[index])), DXL_HIBYTE(DXL_LOWORD(ServoVel3[index])), DXL_LOBYTE(DXL_HIWORD(ServoVel3[index])), DXL_HIBYTE(DXL_HIWORD(ServoVel3[index]))]
-        goal_velocity_4 = [DXL_LOBYTE(DXL_LOWORD(ServoVel4[index])), DXL_HIBYTE(DXL_LOWORD(ServoVel4[index])), DXL_LOBYTE(DXL_HIWORD(ServoVel4[index])), DXL_HIBYTE(DXL_HIWORD(ServoVel4[index]))]
+        goal_velocity_1 = [DXL_LOBYTE(DXL_LOWORD(ServoVel1)), DXL_HIBYTE(DXL_LOWORD(ServoVel1)), DXL_LOBYTE(DXL_HIWORD(ServoVel1)), DXL_HIBYTE(DXL_HIWORD(ServoVel1))]
+        goal_velocity_2 = [DXL_LOBYTE(DXL_LOWORD(ServoVel2)), DXL_HIBYTE(DXL_LOWORD(ServoVel2)), DXL_LOBYTE(DXL_HIWORD(ServoVel2)), DXL_HIBYTE(DXL_HIWORD(ServoVel2))]
+        goal_velocity_3 = [DXL_LOBYTE(DXL_LOWORD(ServoVel3)), DXL_HIBYTE(DXL_LOWORD(ServoVel3)), DXL_LOBYTE(DXL_HIWORD(ServoVel3)), DXL_HIBYTE(DXL_HIWORD(ServoVel3))]
+        goal_velocity_4 = [DXL_LOBYTE(DXL_LOWORD(ServoVel4)), DXL_HIBYTE(DXL_LOWORD(ServoVel4)), DXL_LOBYTE(DXL_HIWORD(ServoVel4)), DXL_HIBYTE(DXL_HIWORD(ServoVel4))]
 
         # Add Dynamixel#1 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[0],goal_velocity_1)
@@ -286,10 +286,10 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
         # Clear syncwrite parameter storage
         groupSyncWriteVEL.clearParam()
 
-        goal_position_1 = [DXL_LOBYTE(DXL_LOWORD(ServoPos1[index])), DXL_HIBYTE(DXL_LOWORD(ServoPos1[index])), DXL_LOBYTE(DXL_HIWORD(ServoPos1[index])), DXL_HIBYTE(DXL_HIWORD(ServoPos1[index]))]
-        goal_position_2 = [DXL_LOBYTE(DXL_LOWORD(ServoPos2[index])), DXL_HIBYTE(DXL_LOWORD(ServoPos2[index])), DXL_LOBYTE(DXL_HIWORD(ServoPos2[index])), DXL_HIBYTE(DXL_HIWORD(ServoPos2[index]))]
-        goal_position_3 = [DXL_LOBYTE(DXL_LOWORD(ServoPos3[index])), DXL_HIBYTE(DXL_LOWORD(ServoPos3[index])), DXL_LOBYTE(DXL_HIWORD(ServoPos3[index])), DXL_HIBYTE(DXL_HIWORD(ServoPos3[index]))]
-        goal_position_4 = [DXL_LOBYTE(DXL_LOWORD(ServoPos4[index])), DXL_HIBYTE(DXL_LOWORD(ServoPos4[index])), DXL_LOBYTE(DXL_HIWORD(ServoPos4[index])), DXL_HIBYTE(DXL_HIWORD(ServoPos4[index]))]
+        goal_position_1 = [DXL_LOBYTE(DXL_LOWORD(ServoPos1)), DXL_HIBYTE(DXL_LOWORD(ServoPos1)), DXL_LOBYTE(DXL_HIWORD(ServoPos1)), DXL_HIBYTE(DXL_HIWORD(ServoPos1))]
+        goal_position_2 = [DXL_LOBYTE(DXL_LOWORD(ServoPos2)), DXL_HIBYTE(DXL_LOWORD(ServoPos2)), DXL_LOBYTE(DXL_HIWORD(ServoPos2)), DXL_HIBYTE(DXL_HIWORD(ServoPos2))]
+        goal_position_3 = [DXL_LOBYTE(DXL_LOWORD(ServoPos3)), DXL_HIBYTE(DXL_LOWORD(ServoPos3)), DXL_LOBYTE(DXL_HIWORD(ServoPos3)), DXL_HIBYTE(DXL_HIWORD(ServoPos3))]
+        goal_position_4 = [DXL_LOBYTE(DXL_LOWORD(ServoPos4)), DXL_HIBYTE(DXL_LOWORD(ServoPos4)), DXL_LOBYTE(DXL_HIWORD(ServoPos4)), DXL_HIBYTE(DXL_HIWORD(ServoPos4))]
 
         # Add Dynamixel#1 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[0],goal_position_1)
@@ -379,33 +379,26 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn):
     elif (DesiredLimb == 7):
         # Tail
         pass
-    
-        
 
+def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix,portHandler,packetHandler):
+    MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
 
-    #Turn torque off when 
-    # PUT THIS IN MASTER SCRIPT
-    TurnOffOnTorque(TORQUE_DISABLE,1,limb[0],limb[-1])
+def MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
+    MoveLimbHome(1,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+    MoveLimbHome(2,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+    MoveLimbHome(3,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+    MoveLimbHome(4,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
 
-def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix):
-    MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0)
+def StraightenSpine(portHandler,packetHandler):
+    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler)
 
-def MoveLimbsHome(PositionMatrix,SpeedMatrix):
-    MoveLimbHome(1,PositionMatrix,SpeedMatrix,0)
-    MoveLimbHome(2,PositionMatrix,SpeedMatrix,0)
-    MoveLimbHome(3,PositionMatrix,SpeedMatrix,0)
-    MoveLimbHome(4,PositionMatrix,SpeedMatrix,0)
-
-def StraightenSpine():
-    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0)
-
-def MoveEntireBody(PositionMatrix,SpeedMatrix):
+def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
     index = 1
     while 1:
-        MoveLimbHome(1,PositionMatrix,SpeedMatrix,index)
-        MoveLimbHome(2,PositionMatrix,SpeedMatrix,index)
-        MoveLimbHome(3,PositionMatrix,SpeedMatrix,index)
-        MoveLimbHome(4,PositionMatrix,SpeedMatrix,index)
+        MoveLimbHome(1,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
+        MoveLimbHome(2,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
+        MoveLimbHome(3,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
+        MoveLimbHome(4,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
         index += 1
         if (index > 21):
             index = 0
@@ -413,7 +406,7 @@ def MoveEntireBody(PositionMatrix,SpeedMatrix):
         if getch() == chr(0x1b):
             break
 
-def DetermineSpeeds(StrideTime,positionsFile):
+def DetermineSpeeds(tspan,positionsFile):
     import numpy as np
     import pandas as pd
     import math
@@ -486,6 +479,8 @@ def DetermineSpeeds(StrideTime,positionsFile):
             movementSpeed = (rotations / movementTime) / 0.114
             speeds[-1][j] = round(movementSpeed)
     speeds[speeds==0]=1
+    rows = speeds.shape[0]
+    cols = speeds.shape[1]
     for x in range(0, rows):
         for y in range(0, cols):
             if (speeds[x][y] > 1023):
@@ -663,17 +658,24 @@ def PrintUserMenu():
     print("4: Other")
     print("5: Exit\n")
 
-def ReturnRelevantData(DesiredData,DesiredServo):
+def ReturnRelevantData(DesiredData,DesiredServo,portHandler,packetHandler):
     pass
 
-def WriteDataToDoc():
-    pass
+def WriteDataToDoc(inData,FileName,FileExist):
+    # If First run, file exist = 0
+    # Set to 1 if already exists or back to 0 if making a new one
+    if (FileExist == 0):
+        f = open(FileName,"w+")
+    elif (FileExist == 1):
+        f = open(FileName,)
+    else:
+        pass
 
 def ChangeSpecificTrait():
     pass
 
-def CleanUp(number_of_servos_connected):
-    TurnOffOnTorque(TORQUE_OFF,1,1,number_of_servos_connected)
+def CleanUp(number_of_servos_connected,portHandler,packetHandler):
+    TurnOffOnTorque(TORQUE_OFF,1,1,number_of_servos_connected,portHandler,packetHandler)
     print("Shutting down system.\n")
     print("Thank you for using Theo!")
     
