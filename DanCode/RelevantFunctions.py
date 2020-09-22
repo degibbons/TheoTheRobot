@@ -729,26 +729,78 @@ def WriteDataToDoc(inData,FileName,FileExist):
     else:
         pass
 
+def DisplayServoTraits():
+    print("Servo Traits:\n")
+    print("1: Model Number")
+    print("2: Model Information")
+    print("3: Firmware Version")
+    print("4: ID")
+    print("5: Baud Rate")
+    print("6: Return Delay Time")
+    print("7: Drive Mode")
+    print("8: Operating Mode")
+    print("9: Protocol Type")
+    print("10: Homing Offset")
+    print("11: Moving Threshold")
+    print("12: Temperature Limit")
+    print("13: Max Voltage Limit")
+    print("14: Min Voltage Limit")
+    print("15: PWM Limit")
+    print("16: Current Limit")
+    print("17: Acceleration Limit")
+    print("18: Velocity Limit")
+    print("19: Max Position Limit")
+    print("20: Min Position Limit")
+    print("21: Shutdown")
+    print("22: Torque Toggle")
+    print("23: LED")
+    print("24: Status Return Level")
+    print("25: Registered Instruction")
+    print("26: Hardware Error Status")
+    print("27: Velocity I Gain")
+    print("28: Velocity P Gain")
+    print("29: Position D Gain")
+    print("30: Position I Gain")
+    print("31: Position P Gain")
+    print("32: Goal PWM")
+    print("33: Goal Current")
+    print("34: Goal Velocity")
+    print("35: Profile Acceleration")
+    print("36: Profile Velocity")
+    print("37: Goal Position")
+    print("38: Realtime Tick")
+    print("39: Moving")
+    print("40: Moving Status")
+    print("41: Present PWM")
+    print("42: Present Current")
+    print("43: Present Velocity")
+    print("44: Present Position")
+    print("45: Velocity Trajectory")
+    print("46: Position Trajectory")
+    print("47: Present Input Voltage")
+    print("48: Present Temperature\n")
+
 def DataAddrConversion(DesiredData):
+    DataAddr = -1
     # Get the address of the desired data trait, used in conjuction with ReturnRelevantData and ChangeSpecificTrait
-    if (DesiredData == 1):
-        DataAddr = 0 # 0 will be replaced by appropriate address
-    elif (DesiredData == 2):
-        pass
-    elif (DesiredData == 3):
-        pass
+    if (DesiredData >= 1 and DesiredData <= 48):
+        DataAddr = AddrDict[DesiredData]
     else:
-        pass
-    return DataAddr
+        print("That's not a recognized trait selection, please try again!\n")
+    return DataAddr if DataAddr is not -1 else -1
 
 def ReturnRelevantData(DesiredData,DesiredServo,portHandler,packetHandler):
     # Obtain from the desired servo the desired trait data
+    # 
     pass
+
+### MAYBE USE THESE TWO IN CONJUCTION FOR FUTURE CHANGE OF NUMEROUS SERVOS
+# or just use the sync/bulk functions
 
 def ChangeSpecificTrait(DataAddr,DesiredServo,portHandler,packetHandler):
     # Change the desired trait data of the desired servo
+    # Use Read_Write for single servo
     pass
-
 
 def RebootServos(DesiredServo):
     #The Reboot function can be used when the Dynamixel stops moving since the Dynamixel error occurred by, for example, overload.

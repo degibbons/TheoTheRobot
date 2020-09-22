@@ -161,3 +161,56 @@ STRAIGHT_SPINE = 2048
 STRAIGHT_SPEED = 50
 STRAIGHT_SPINE_ARRAY = [STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE]
 STRAIGHT_SPEED_ARRAY = [STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED]
+
+# Selections corresponding to Addresses
+# Selections originate from DisplayServoTraits Function
+AddrDict = {
+    1: 0, # Model Number
+    2: 2, # Model Information
+    3: 6, # Firmware Version
+    4: 7, # ID
+    5: 8, # Baud Rate
+    6: 9, # Return Delay Time
+    7: 10, # Drive Mode
+    8: 11, # Operating Mode
+    9: 13, # Protocol Type
+    10: 20, # Homing Offset
+    11: 24, # Moving Threshold
+    12: 31, # Temperature Limit
+    13: 32, # Max Voltage Limit
+    14: 34, # Min Voltage Limit
+    15: 36, # PWM Limit
+    16: 38, # Current Limit
+    17: 40, # Acceleration Limit
+    18: 44, # Velocity Limit
+    19: 48, # Max Position Limit
+    20: 52, # Min Position Limit
+    21: 63, # Shutdown
+    22: 64, # Torque Toggle
+    23: 65, # LED
+    24: 68, # Status Return Level
+    25: 69, # Registered Instruction
+    26: 70, # Hardware Error Status
+    27: 76, # Velocity I Gain
+    28: 78, # Velocity P Gain
+    29: 80, # Position D Gain
+    30: 82, # Position I Gain
+    31: 84, # Position P Gain
+    32: 100, # Goal PWM
+    33: 102, # Goal Current
+    34: 104, # Goal Velocity
+    35: 108, # Profile Acceleration
+    36: 112, # Profile Velocity
+    37: 116, # Goal Position
+    38: 120, # Realtime Tick
+    39: 122, # Moving
+    40: 123, # Moving Status
+    41: 124, # Present PWM
+    42: 126, # Present Current
+    43: 128, # Present Velocity
+    44: 132, # Present Position
+    45: 136, # Velocity Trajectory
+    46: 140, # Position Trajectory
+    47: 144, # Present Input Voltage
+    48: 146 # Present Temperature
+}
