@@ -192,7 +192,7 @@ while 1:
         print("6: Send Servo trait")
         print("7: Ping all connected Servos")
         print("8: Reboot specified Servo(s)")
-        print("9: Reset specified Servo(s)")
+        print("9: Reset specified Servo(s)\n")
         desired_action2 = int(input("Enter selection number here: "))
         if (desired_action2 == 1):
             TurnOffOnTorque(TORQUE_OFF,1,1,24,portHandler,packetHandler)
@@ -218,7 +218,7 @@ while 1:
                 DesiredServo = input("What Servo do you want to reboot?: ")
                 RebootServos(DesiredServo)
             elif (AllOrOne == 2):
-                for i in range(1,25)
+                for i in range(1,25):
                     RebootServos(i)
                     print("Dynamixel #%d is now Rebooted." % (DesiredServo))
             else:
@@ -229,7 +229,7 @@ while 1:
                 DesiredServo = input("What Servo do you want to reset?: ")
                 ResetServos(DesiredServo)
             elif (AllOrOne == 2):
-                for i in range(1,25)
+                for i in range(1,25):
                     ResetServos(i)
                     print("Dynamixel #%d is now Reset." % (DesiredServo))
             else:
