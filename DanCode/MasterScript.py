@@ -2,6 +2,8 @@
 #    setup.py FIRST when moving 
 #           to new computer
 
+# GUI to make interaction easier (consider tkinter)
+
 # NEED TO WRITE SCRIPT TO IMPORT LIBRARYS BEFORE RUNNING MASTER SCRIPT
 # Need pandas, numpy, and dynamixel_sdk
 
@@ -9,10 +11,9 @@
 
 # Need to implement threading to stop movement when button is pressed during cycling
 
-# Need continuous loop asking user for options instead of just once through
-
 import os
 import numpy as np
+import time
 from ControlTable import *
 from RelevantFunctions import *
 from dynamixel_sdk import *
@@ -93,25 +94,53 @@ while 1:
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,1,4,portHandler,packetHandler)
-            MoveSingleLimb(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+            while 1:
+                MoveSingleLimb(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                index += 1
+                if (index > 21):
+                    index = 0
+                print("Press any key to continue! (or press ESC to quit!)")
+                if getch() == chr(0x1b):
+                    break
         elif (desired_servo_limb == 2):
             limb = F_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,5,8,portHandler,packetHandler)
-            MoveSingleLimb(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+            while 1:
+                MoveSingleLimb(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                index += 1
+                if (index > 21):
+                    index = 0
+                print("Press any key to continue! (or press ESC to quit!)")
+                if getch() == chr(0x1b):
+                    break
         elif (desired_servo_limb == 3):
             limb = B_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,9,12,portHandler,packetHandler)
-            MoveSingleLimb(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+            while 1:
+                MoveSingleLimb(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                index += 1
+                if (index > 21):
+                    index = 0
+                print("Press any key to continue! (or press ESC to quit!)")
+                if getch() == chr(0x1b):
+                    break
         elif (desired_servo_limb == 4):
             limb = B_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,13,16,portHandler,packetHandler)
-            MoveSingleLimb(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+            while 1:
+                MoveSingleLimb(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                index += 1
+                if (index > 21):
+                    index = 0
+                print("Press any key to continue! (or press ESC to quit!)")
+                if getch() == chr(0x1b):
+                    break
         elif (desired_servo_limb == 5):
             limb = NECK
             for i in range(limb[0],limb[3]+1):
@@ -137,7 +166,7 @@ while 1:
             pass
     elif (desired_action1 == 3):
         for i in range(limb[0],limb[24]+1):
-                SetServoTraits(i,portHandler,packetHandler)
+            SetServoTraits(i,portHandler,packetHandler)
         desired_action3 = int(input("Would you like to move the robot to Home Position[1]? Or through an entire stride[2]?"))
         if (desired_action3 == 1):
             StraightenSpine(portHandler,packetHandler)
@@ -160,7 +189,10 @@ while 1:
         print("3: Turn Torque setting off for specific servo")
         print("4: Turn Torque setting on for specific servo")
         print("5: Get Servo trait")
-        print("6: Send Servo trait\n")
+        print("6: Send Servo trait")
+        print("7: Ping all connected Servos")
+        print("8: Reboot specified Servo(s)")
+        print("9: Reset specified Servo(s)")
         desired_action2 = int(input("Enter selection number here: "))
         if (desired_action2 == 1):
             TurnOffOnTorque(TORQUE_OFF,1,1,24,portHandler,packetHandler)
@@ -178,6 +210,30 @@ while 1:
         elif (desired_action2 == 6):
             # Use ChangeSpecificTrait function
             pass
+        elif (desired_action2 == 7):
+            PingServos()
+        elif (desired_action2 == 8):
+            AllOrOne = input("Are you Rebooting All[2] or One[1] of the servos?: ")
+            if (AllOrOne == 1):
+                DesiredServo = input("What Servo do you want to reboot?: ")
+                RebootServos(DesiredServo)
+            elif (AllOrOne == 2):
+                for i in range(1,25)
+                    RebootServos(i)
+                    print("Dynamixel #%d is now Rebooted." % (DesiredServo))
+            else:
+                pass
+        elif (desired_action2 == 9):        
+            AllOrOne = input("Are you Resetting All[2] or One[1] of the servos?: ")
+            if (AllOrOne == 1):
+                DesiredServo = input("What Servo do you want to reset?: ")
+                ResetServos(DesiredServo)
+            elif (AllOrOne == 2):
+                for i in range(1,25)
+                    ResetServos(i)
+                    print("Dynamixel #%d is now Reset." % (DesiredServo))
+            else:
+                pass
         else:
             pass
     elif (desired_action1 == 5):

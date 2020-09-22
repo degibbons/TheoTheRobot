@@ -1,4 +1,4 @@
-# Control table address
+# Control table address and Values
 ADDR_PRO_TORQUE_ENABLE      = 64               # Control table address is different in Dynamixel model
 ADDR_PRO_GOAL_POSITION      = 116
 ADDR_PRO_PRESENT_POSITION   = 132
@@ -16,6 +16,11 @@ MIN_POSITION_LIMIT          = 0
 ADDR_MOVING_THRESHOLD       = 24            #4          10      #ESSENTIALLY ACCURACY TOLERANCE
 MOVING_THRESHOLD_ACCURACY_H = 1
 VELOCITY_LIMIT_H            = 1023
+
+PreferedDelay               = 0.1
+
+# Control table address
+ADDR_PRO_BAUDRATE           = 8                             # Control table address is different in Dynamixel model
 
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
@@ -62,6 +67,15 @@ BAUDRATE                    = 1000000             # Dynamixel default baudrate :
 DEVICENAME                  = '/dev/ttyUSB0'    # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
+FACTORYRST_DEFAULTBAUDRATE  = 57600                         # Dynamixel baudrate set by factoryreset
+NEW_BAUDNUM                 = 3                             # New baudnum to recover Dynamixel baudrate as it was
+OPERATION_MODE              = 0x02                          # 0xFF : reset all values
+                                                            # 0x01 : reset all values except ID
+                                                            # 0x02 : reset all values except ID and baudrate
+
+COMM_SUCCESS                = 0                             # Communication Success result value
+COMM_TX_FAIL                = -1001                         # Communication Tx Failed
+
 TORQUE_ON               = 1                 # Value for enabling the torque
 TORQUE_OFF              = 0                 # Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE  = 10           # Dynamixel will rotate between this value
@@ -72,6 +86,8 @@ DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status thresh
 LEN_PRO_GOAL_POSITION       = 4
 LEN_PRO_PRESENT_POSITION    = 4
 LEN_VELOCITY_LIMIT          = 4
+
+FileExist = 0       #Indicates if the file data is written to exists or not
 
 index = 0
 dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]         # Goal position

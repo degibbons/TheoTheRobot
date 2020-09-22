@@ -3,6 +3,7 @@ from ControlTable import *
 from dynamixel_sdk import *
 import numpy as np
 import copy as cp
+import time
 
 def InitialSetup():
     # Initialize PortHandler instance
@@ -87,6 +88,8 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
     else:
         print("[ID:%03d] Drive mode set to: %03d" %(ServoID, DRIVE_MODE_VEL_BASED))
 
+    time.sleep(PreferedDelay)
+
     #Set operating mode to joint/position control mode
     dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, ServoID, ADDR_OPERATING_MODE, OPERATING_JOINT_POSITION_MODE)
     if dxl_comm_result != COMM_SUCCESS:
@@ -95,6 +98,8 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     else:
         print("[ID:%03d] Operating mode set to: %03d" %(ServoID, OPERATING_JOINT_POSITION_MODE))
+
+    time.sleep(PreferedDelay)
 
     #Set acceleration limit 
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_ACCELERATION_LIMIT, ACCELERATION_LIMIT_M)
@@ -105,6 +110,8 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
     else:
         print("[ID:%03d] Acceleration limit set to: %03d" %(ServoID, ACCELERATION_LIMIT_M))
 
+    time.sleep(PreferedDelay)
+
     #Set max position limit
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_MAX_POSITION_LIMIT, MAX_POSITION_LIMIT)
     if dxl_comm_result != COMM_SUCCESS:
@@ -113,6 +120,8 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     else:
         print("[ID:%03d] Max position limit set to: %03d" %(ServoID, MAX_POSITION_LIMIT))
+
+    time.sleep(PreferedDelay)
 
     #Set min position limit
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_MIN_POSITION_LIMIT, MIN_POSITION_LIMIT)
@@ -123,6 +132,8 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
     else:
         print("[ID:%03d] Min position limit set to: %03d" %(ServoID, MIN_POSITION_LIMIT))
 
+    time.sleep(PreferedDelay)
+
     #Set moving threshold
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_MOVING_THRESHOLD, MOVING_THRESHOLD_ACCURACY_H)
     if dxl_comm_result != COMM_SUCCESS:
@@ -131,6 +142,8 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
         print("%s" % packetHandler.getRxPacketError(dxl_error))
     else:
         print("[ID:%03d] Moving accuracy set to high: %03d" %(ServoID, MOVING_THRESHOLD_ACCURACY_H))
+
+    time.sleep(PreferedDelay)
 
 def SetSingleServoVelocity(ServoID,ServoVel,portHandler,packetHandler):
     #Set velocity limit 
@@ -232,22 +245,31 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncRead addparam failed" % limb[0])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Add parameter storage for Dynamixel#2 present position value
         dxl_addparam_result = groupSyncRead.addParam(limb[1])
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncRead addparam failed" % limb[1])
             quit()
+
+        time.sleep(PreferedDelay)
+
         # Add parameter storage for Dynamixel#3 present position value
         dxl_addparam_result = groupSyncRead.addParam(limb[2])
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncRead addparam failed" % limb[2])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Add parameter storage for Dynamixel#4 present position value
         dxl_addparam_result = groupSyncRead.addParam(limb[3])
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncRead addparam failed" % limb[3])
             quit()
+
+        time.sleep(PreferedDelay)
 
         goal_velocity_1 = [DXL_LOBYTE(DXL_LOWORD(ServoVel1)), DXL_HIBYTE(DXL_LOWORD(ServoVel1)), DXL_LOBYTE(DXL_HIWORD(ServoVel1)), DXL_HIBYTE(DXL_HIWORD(ServoVel1))]
         goal_velocity_2 = [DXL_LOBYTE(DXL_LOWORD(ServoVel2)), DXL_HIBYTE(DXL_LOWORD(ServoVel2)), DXL_LOBYTE(DXL_HIWORD(ServoVel2)), DXL_HIBYTE(DXL_HIWORD(ServoVel2))]
@@ -260,11 +282,15 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[0])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Add Dynamixel#2 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[1],goal_velocity_2)
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[1])
             quit()
+
+        time.sleep(PreferedDelay)
 
         # Add Dynamixel#3 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[2],goal_velocity_3)
@@ -272,11 +298,15 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[2])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Add Dynamixel#4 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[3],goal_velocity_4)
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[3])
             quit()
+        
+        time.sleep(PreferedDelay)
 
         # Syncwrite goal velocity
         dxl_comm_result = groupSyncWriteVEL.txPacket()
@@ -297,11 +327,15 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[0])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Add Dynamixel#2 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[1],goal_position_2)
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[1])
             quit()
+
+        time.sleep(PreferedDelay)
 
         # Add Dynamixel#3 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[2],goal_position_3)
@@ -309,12 +343,16 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[2])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Add Dynamixel#4 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[3],goal_position_4)
         if dxl_addparam_result != True:
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[3])
             quit()
 
+        time.sleep(PreferedDelay)
+        
         # Syncwrite goal position
         dxl_comm_result = groupSyncWritePOS.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
@@ -328,11 +366,15 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
+        time.sleep(PreferedDelay)
+
         # Check if groupsyncread data of Dynamixel#1 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
         if dxl_getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % limb[0])
             quit()
+
+        time.sleep(PreferedDelay)
 
         # Check if groupsyncread data of Dynamixel#2 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -340,11 +382,15 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncRead getdata failed" % limb[1])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Check if groupsyncread data of Dynamixel#3 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
         if dxl_getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % limb[2])
             quit()
+
+        time.sleep(PreferedDelay)
 
         # Check if groupsyncread data of Dynamixel#4 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -352,17 +398,27 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
             print("[ID:%03d] groupSyncRead getdata failed" % limb[3])
             quit()
 
+        time.sleep(PreferedDelay)
+
         # Get Dynamixel#1 present position value
         dxl1_present_position = groupSyncRead.getData(limb[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+        time.sleep(PreferedDelay)
 
         # Get Dynamixel#2 present position value
         dxl2_present_position = groupSyncRead.getData(limb[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
+        time.sleep(PreferedDelay)
+
         # Get Dynamixel#3 present position value
         dxl3_present_position = groupSyncRead.getData(limb[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
+        time.sleep(PreferedDelay)
+
         # Get Dynamixel#4 present position value
         dxl4_present_position = groupSyncRead.getData(limb[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+        time.sleep(PreferedDelay)
 
         print("[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoPos1, dxl1_present_position, limb[1], ServoPos2, dxl2_present_position))
         print("[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoPos3, dxl3_present_position, limb[3], ServoPos4, dxl4_present_position))
@@ -384,27 +440,33 @@ def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix,portHandler,packetHandle
     MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
 
 def MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
-    MoveLimbHome(1,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
-    MoveLimbHome(2,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
-    MoveLimbHome(3,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
-    MoveLimbHome(4,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+    MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
 
 def StraightenSpine(portHandler,packetHandler):
     MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler)
 
 def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
     index = 1
+    start = 0
     while 1:
-        MoveLimbHome(1,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
-        MoveLimbHome(2,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
-        MoveLimbHome(3,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
-        MoveLimbHome(4,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler)
+        if (start == 0):
+            MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+            MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+            MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+            MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+            start = 1
+        elif (start == 1):
+            MoveSingleLimb(1,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+            MoveSingleLimb(2,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+            MoveSingleLimb(3,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+            MoveSingleLimb(4,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
         index += 1
         if (index > 21):
             index = 0
-        print("Press any key to continue! (or press ESC to quit!)")
-        if getch() == chr(0x1b):
-            break
+        
 
 def DetermineSpeeds(tspan,positionsFile):
     import numpy as np
@@ -432,7 +494,6 @@ def DetermineSpeeds(tspan,positionsFile):
     percents = np.linspace(1,cLength-1,cLength-1)
     joints = list(range(1,cWidth+1))
     percents = percents.astype(int).tolist()
-    distTravel = np.zeros((11,16))
     for i in percents:
         for j in joints:
             if (j == 1 or j == 2 or j == 3 or j == 4 ):
@@ -658,22 +719,290 @@ def PrintUserMenu():
     print("4: Other")
     print("5: Exit\n")
 
-def ReturnRelevantData(DesiredData,DesiredServo,portHandler,packetHandler):
-    pass
-
 def WriteDataToDoc(inData,FileName,FileExist):
     # If First run, file exist = 0
     # Set to 1 if already exists or back to 0 if making a new one
     if (FileExist == 0):
         f = open(FileName,"w+")
     elif (FileExist == 1):
-        f = open(FileName,)
+        f = open(FileName,"a+")
     else:
         pass
 
-def ChangeSpecificTrait():
+def DataAddrConversion(DesiredData):
+    # Get the address of the desired data trait, used in conjuction with ReturnRelevantData and ChangeSpecificTrait
+    if (DesiredData == 1):
+        DataAddr = 0 # 0 will be replaced by appropriate address
+    elif (DesiredData == 2):
+        pass
+    elif (DesiredData == 3):
+        pass
+    else:
+        pass
+    return DataAddr
+
+def ReturnRelevantData(DesiredData,DesiredServo,portHandler,packetHandler):
+    # Obtain from the desired servo the desired trait data
     pass
 
+def ChangeSpecificTrait(DataAddr,DesiredServo,portHandler,packetHandler):
+    # Change the desired trait data of the desired servo
+    pass
+
+
+def RebootServos(DesiredServo):
+    #The Reboot function can be used when the Dynamixel stops moving since the Dynamixel error occurred by, for example, overload.
+
+    import os
+
+    if os.name == 'nt':
+        import msvcrt
+        def getch():
+            return msvcrt.getch().decode()
+    else:
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        def getch():
+            try:
+                tty.setraw(sys.stdin.fileno())
+                ch = sys.stdin.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            return ch
+    # Initialize PortHandler instance
+    # Set the port path
+    # Get methods and members of PortHandlerLinux or PortHandlerWindows
+    portHandler = PortHandler(DEVICENAME)
+
+    # Initialize PacketHandler instance
+    # Set the protocol version
+    # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
+    packetHandler = PacketHandler(PROTOCOL_VERSION)
+
+    # Open port
+    if portHandler.openPort():
+        print("Succeeded to open the port")
+    else:
+        print("Failed to open the port")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+
+
+    # Set port baudrate
+    if portHandler.setBaudRate(BAUDRATE):
+        print("Succeeded to change the baudrate")
+    else:
+        print("Failed to change the baudrate")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+
+    # Trigger
+    print("Press any key to reboot")
+    getch()
+
+    print("See the Dynamixel LED flickering")
+    # Try reboot
+    # Dynamixel LED will flicker while it reboots
+    dxl_comm_result, dxl_error = packetHandler.reboot(portHandler, DesiredServo)
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+    elif dxl_error != 0:
+        print("%s" % packetHandler.getRxPacketError(dxl_error))
+
+    print("[ID:%03d] reboot Succeeded\n" % DesiredServo)
+
+
+    # Close port
+    portHandler.closePort()
+
+def ResetServos(DesiredServo):
+    #resets settings of Dynamixel to default values. The Factoryreset function has three operation modes:
+    #0xFF : reset all values (ID to 1, baudrate to 57600)
+    #0x01 : reset all values except ID (baudrate to 57600)
+    #0x02 : reset all values except ID and baudrate.
+
+    import os, sys
+
+    if os.name == 'nt':
+        import msvcrt
+        def getch():
+            return msvcrt.getch().decode()
+    else:
+        import tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        tty.setraw(sys.stdin.fileno())
+        def getch():
+            return sys.stdin.read(1)
+    
+    os.sys.path.append('../dynamixel_functions_py')             # Path setting
+    
+    from time import sleep
+    import dynamixel_functions as dynamixel                     # Uses DYNAMIXEL SDK library
+
+    # Initialize PortHandler Structs
+    # Set the port path
+    # Get methods and members of PortHandlerLinux or PortHandlerWindows
+    port_num = dynamixel.portHandler(DEVICENAME)
+
+    # Initialize PacketHandler Structs
+    dynamixel.packetHandler()
+
+    dxl_comm_result = COMM_TX_FAIL                              # Communication result
+
+    dxl_error = 0                                               # Dynamixel error
+    dxl_baudnum_read = 0                                        # Read baudnum
+
+    # Open port
+    if dynamixel.openPort(port_num):
+        print("Succeeded to open the port!")
+    else:
+        print("Failed to open the port!")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+
+    # Set port baudrate
+    if dynamixel.setBaudRate(port_num, BAUDRATE):
+        print("Succeeded to change the baudrate!")
+    else:
+        print("Failed to change the baudrate!")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+
+
+    # Read present baudrate of the controller
+    print("Now the controller baudrate is : %d" % (dynamixel.getBaudRate(port_num)))
+
+    # Try factoryreset
+    print("[ID:%03d] Try factoryreset : " % (DesiredServo))
+    dynamixel.factoryReset(port_num, PROTOCOL_VERSION, DesiredServo, OPERATION_MODE)
+    if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+        print("Aborted")
+        dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+        quit()
+    elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+        dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+
+
+    # Wait for reset
+    print("Wait for reset...")
+    sleep(2)
+
+    print("[ID:%03d] factoryReset Success!" % (DesiredServo))
+
+    # Set controller baudrate to dxl default baudrate
+    if dynamixel.setBaudRate(port_num, FACTORYRST_DEFAULTBAUDRATE):
+        print("Succeed to change the controller baudrate to : %d" % (FACTORYRST_DEFAULTBAUDRATE))
+    else:
+        print("Failed to change the controller baudrate")
+        getch()
+        quit()
+
+    # Read Dynamixel baudnum
+    dxl_baudnum_read = dynamixel.read1ByteTxRx(port_num, PROTOCOL_VERSION, DesiredServo, ADDR_PRO_BAUDRATE)
+    if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+        dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+    elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+        dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+    else:
+      print("[ID:%03d] Dynamixel baudnum is now : %d" % (DesiredServo, dxl_baudnum_read))
+
+    # Write new baudnum
+    dynamixel.write1ByteTxRx(port_num, PROTOCOL_VERSION, DesiredServo, ADDR_PRO_BAUDRATE, NEW_BAUDNUM)
+    if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+        dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+    elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+        dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+    else:
+      print("[ID:%03d] Set Dynamixel baudnum to : %d" % (DesiredServo, NEW_BAUDNUM))
+
+    # Set port baudrate to BAUDRATE
+    if dynamixel.setBaudRate(port_num, BAUDRATE):
+        print("Succeed to change the controller baudrate to : %d" % (BAUDRATE))
+    else:
+        print("Failed to change the controller baudrate")
+        getch()
+        quit()
+
+    sleep(0.2)
+
+    # Read Dynamixel baudnum
+    dxl_baudnum_read = dynamixel.read1ByteTxRx(port_num, PROTOCOL_VERSION, DesiredServo, ADDR_PRO_BAUDRATE)
+    if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+        dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+    elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+        dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+    else:
+      print("[ID:%03d] Dynamixel baudnum is now : %d" % (DesiredServo, dxl_baudnum_read))
+
+
+    # Close port
+    dynamixel.closePort(port_num)
+
+def PingServos():
+    import os
+
+    if os.name == 'nt':
+        import msvcrt
+        def getch():
+            return msvcrt.getch().decode()
+    else:
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        def getch():
+            try:
+                tty.setraw(sys.stdin.fileno())
+                ch = sys.stdin.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            return ch
+    # Initialize PortHandler instance
+    # Set the port path
+    # Get methods and members of PortHandlerLinux or PortHandlerWindows
+    portHandler = PortHandler(DEVICENAME)
+
+    # Initialize PacketHandler instance
+    # Set the protocol version
+    # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
+    packetHandler = PacketHandler(PROTOCOL_VERSION)
+
+    # Open port
+    if portHandler.openPort():
+        print("Succeeded to open the port")
+    else:
+        print("Failed to open the port")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+
+
+    # Set port baudrate
+    if portHandler.setBaudRate(BAUDRATE):
+        print("Succeeded to change the baudrate")
+    else:
+        print("Failed to change the baudrate")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+
+    # Try to broadcast ping the Dynamixel
+    dxl_data_list, dxl_comm_result = packetHandler.broadcastPing(portHandler)
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+    print("Detected Dynamixel :")
+    for dxl_id in dxl_data_list:
+        print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list.get(dxl_id)[0], dxl_data_list.get(dxl_id)[1]))
+
+    # Close port
+    portHandler.closePort()
+    
 def CleanUp(number_of_servos_connected,portHandler,packetHandler):
     TurnOffOnTorque(TORQUE_OFF,1,1,number_of_servos_connected,portHandler,packetHandler)
     print("Shutting down system.\n")
