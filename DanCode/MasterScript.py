@@ -178,7 +178,7 @@ while 1:
             SpeedsArray = np.concatenate((FrontSpeeds,BackSpeeds),axis=1)
             TurnOffOnTorque(TORQUE_ON,0,desired_servo_single,0,portHandler,packetHandler)
             MoveEntireBody(PositionsArray,SpeedsArray,portHandler,packetHandler)
-            # User stop built into function, needs to be extracted and put into MasterScript
+            # User stop needs to be added
             # Threading should be used here
         else:
             pass
@@ -205,11 +205,18 @@ while 1:
             desired_servo_single = int(input("Input the desired servo # you wish to alter: "))
             TurnOffOnTorque(TORQUE_ON,0,desired_servo_single,0,portHandler,packetHandler)
         elif (desired_action2 == 5):
-            # Use ReturnRelevantData function
-            pass
+            DisplayServoTraits()
+            Selection1 = int(input("Enter the Trait Number you'd like to extract: "))
+            Selection2 = int(input("Enter the Servo you'd like to extract the Trait from: "))
+            ReadTraitData(Selection1,Selection2)
+            print("Trait Read Finished\n")
         elif (desired_action2 == 6):
-            # Use ChangeSpecificTrait function
-            pass
+            DisplayServoTraits()
+            Selection1 = int(input("Enter the Trait Number you'd like to edit: "))
+            Selection2 = int(input("Enter the Servo you'd like to edit the Trait for: "))
+            Selection3 = int(input("Enter the Value you'd like to change the trait to: "))
+            WriteTraitData(Selection1,Selection3,Selection2)
+            print("Trait Edit Finished\n")
         elif (desired_action2 == 7):
             PingServos()
         elif (desired_action2 == 8):
