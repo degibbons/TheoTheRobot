@@ -467,7 +467,6 @@ def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
         if (index > 21):
             index = 0
         
-
 def DetermineSpeeds(tspan,positionsFile):
     import numpy as np
     import pandas as pd
@@ -808,9 +807,7 @@ def ReadTraitData(DesiredData,DesiredServo):
                 ch = sys.stdin.read(1)
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            return ch
-    
-    from dynamixel_sdk import *    
+            return ch    
 
     # Initialize PortHandler instance
     # Set the port path
@@ -1207,7 +1204,6 @@ def WriteTraitData(DesiredData,DesiredValue,DesiredServo):
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
             return ch
 
-    from dynamixel_sdk import *
     # Change the desired trait data of the desired servo
 
     # Initialize PortHandler instance
