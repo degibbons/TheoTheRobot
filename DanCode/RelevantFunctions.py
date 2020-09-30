@@ -1,3 +1,5 @@
+## NEEDS COMMENTS
+
 import os
 from ControlTable import *
 from dynamixel_sdk import *
@@ -78,6 +80,55 @@ def RotatePositionArray(inArray,shiftNum,arrayLength):
         inArray[j] = temp
     return inArray
 
+def DataAddrConversion(DesiredData):
+    DataAddr = -1
+    # Get the address of the desired data trait, used in conjuction with ReturnRelevantData and ChangeSpecificTrait
+    if (DesiredData >= 1 and DesiredData <= 48):
+        DataAddr = AddrDict[DesiredData]
+    else:
+        print("That's not a recognized trait selection, please try again!\n")
+    return DataAddr if DataAddr is not -1 else -1
+
+def FormatSendData(rawData):
+    return [DXL_LOBYTE(DXL_LOWORD(rawData)), DXL_HIBYTE(DXL_LOWORD(rawData)), DXL_LOBYTE(DXL_HIWORD(rawData)), DXL_HIBYTE(DXL_HIWORD(rawData))]
+
+def AskAboutFile():
+    fileName = "Example.txt"
+    recordInput = input("Do you want to Record the Servo Data to a file? [Y/N]: ")
+    if (recordInput.lower() == "y"):
+        doesFileExist = input("Do you want to add to an existing file[0] or start a new one[1]?: ")
+        if (doesFileExist == 1):
+            filePermission = 'w'
+            print("Your data file will be saved in the Records sub-folder.\n")
+            DesiredFileName = input("What do you want the file to be named?(will be followed by .txt): ")
+            DesiredFileName = DesiredFileName + '.txt'
+            fileName = DesiredFileName
+        elif (doesFileExist == 0):
+            # Need way to easily access name of File that already exists
+            # This will be added when Tkinter is introduced for GUI
+            filePermission = 'a'
+            FileExist = 1
+            #fileName = PREVIOUSLY CREATED FILE
+        else:
+            pass
+    elif (recordInput.lower() == "n"):
+        filePermission = 'n'
+    else:
+        pass
+    return filePermission, fileName
+
+def WriteDataToDoc(inData,FileName,FileExist):
+    # If First run, file exist = 0
+    # Set to 1 if already exists or back to 0 if making a new one
+    if (FileExist == 0):
+        f = open(FileName,"w+")
+    elif (FileExist == 1):
+        f = open(FileName,"a+")
+    else:
+        pass
+    f.write(inData)
+    f.close()
+
 def SetServoTraits(ServoID,portHandler,packetHandler):
     #Set drive mode to velocity based
     dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, ServoID, ADDR_DRIVE_MODE, DRIVE_MODE_VEL_BASED)
@@ -147,7 +198,7 @@ def SetServoTraits(ServoID,portHandler,packetHandler):
 
 def SetSingleServoVelocity(ServoID,ServoVel,portHandler,packetHandler):
     #Set velocity limit 
-    dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_VELOCITY_LIMIT, VELOCITY_LIMIT_H)
+    dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, ServoID, ADDR_PROFILE_VELOCITY, VELOCITY_LIMIT_H)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
     elif dxl_error != 0:
@@ -165,12 +216,12 @@ def MoveSingleServo(ServoID,DesPos,portHandler,packetHandler):
     else:
         print("[ID:%03d] Goal Position set to: %03d" %(ServoID, DesPos))
 
-def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,packetHandler):
+def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,packetHandler,filePermission,fileName):
     # Initialize GroupSyncWrite instance
     groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
     # Initialize GroupSyncWrite instance
-    groupSyncWriteVEL = GroupSyncWrite(portHandler, packetHandler, ADDR_VELOCITY_LIMIT, LEN_VELOCITY_LIMIT)
+    groupSyncWriteVEL = GroupSyncWrite(portHandler, packetHandler, ADDR_PROFILE_VELOCITY, LEN_VELOCITY_LIMIT)
 
     # Initialize GroupSyncRead instace for Present Position
     groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -237,7 +288,6 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
         limb = TAIL
 
     if (DesiredLimb == 1 or DesiredLimb == 2 or DesiredLimb == 3 or DesiredLimb == 4):
-        index = 0
         # Add parameter storage for Dynamixel#1 present position value
         
         dxl_addparam_result = groupSyncRead.addParam(limb[0])
@@ -271,10 +321,14 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
 
         time.sleep(PreferedDelay)
 
-        goal_velocity_1 = [DXL_LOBYTE(DXL_LOWORD(ServoVel1)), DXL_HIBYTE(DXL_LOWORD(ServoVel1)), DXL_LOBYTE(DXL_HIWORD(ServoVel1)), DXL_HIBYTE(DXL_HIWORD(ServoVel1))]
-        goal_velocity_2 = [DXL_LOBYTE(DXL_LOWORD(ServoVel2)), DXL_HIBYTE(DXL_LOWORD(ServoVel2)), DXL_LOBYTE(DXL_HIWORD(ServoVel2)), DXL_HIBYTE(DXL_HIWORD(ServoVel2))]
-        goal_velocity_3 = [DXL_LOBYTE(DXL_LOWORD(ServoVel3)), DXL_HIBYTE(DXL_LOWORD(ServoVel3)), DXL_LOBYTE(DXL_HIWORD(ServoVel3)), DXL_HIBYTE(DXL_HIWORD(ServoVel3))]
-        goal_velocity_4 = [DXL_LOBYTE(DXL_LOWORD(ServoVel4)), DXL_HIBYTE(DXL_LOWORD(ServoVel4)), DXL_LOBYTE(DXL_HIWORD(ServoVel4)), DXL_HIBYTE(DXL_HIWORD(ServoVel4))]
+        #goal_velocity_1 = [DXL_LOBYTE(DXL_LOWORD(ServoVel1)), DXL_HIBYTE(DXL_LOWORD(ServoVel1)), DXL_LOBYTE(DXL_HIWORD(ServoVel1)), DXL_HIBYTE(DXL_HIWORD(ServoVel1))]
+        #goal_velocity_2 = [DXL_LOBYTE(DXL_LOWORD(ServoVel2)), DXL_HIBYTE(DXL_LOWORD(ServoVel2)), DXL_LOBYTE(DXL_HIWORD(ServoVel2)), DXL_HIBYTE(DXL_HIWORD(ServoVel2))]
+        #goal_velocity_3 = [DXL_LOBYTE(DXL_LOWORD(ServoVel3)), DXL_HIBYTE(DXL_LOWORD(ServoVel3)), DXL_LOBYTE(DXL_HIWORD(ServoVel3)), DXL_HIBYTE(DXL_HIWORD(ServoVel3))]
+        #goal_velocity_4 = [DXL_LOBYTE(DXL_LOWORD(ServoVel4)), DXL_HIBYTE(DXL_LOWORD(ServoVel4)), DXL_LOBYTE(DXL_HIWORD(ServoVel4)), DXL_HIBYTE(DXL_HIWORD(ServoVel4))]
+        goal_velocity_1 = FormatSendData(ServoVel1)
+        goal_velocity_2 = FormatSendData(ServoVel2)
+        goal_velocity_3 = FormatSendData(ServoVel3)
+        goal_velocity_4 = FormatSendData(ServoVel4)
 
         # Add Dynamixel#1 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[0],goal_velocity_1)
@@ -316,10 +370,14 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
         # Clear syncwrite parameter storage
         groupSyncWriteVEL.clearParam()
 
-        goal_position_1 = [DXL_LOBYTE(DXL_LOWORD(ServoPos1)), DXL_HIBYTE(DXL_LOWORD(ServoPos1)), DXL_LOBYTE(DXL_HIWORD(ServoPos1)), DXL_HIBYTE(DXL_HIWORD(ServoPos1))]
-        goal_position_2 = [DXL_LOBYTE(DXL_LOWORD(ServoPos2)), DXL_HIBYTE(DXL_LOWORD(ServoPos2)), DXL_LOBYTE(DXL_HIWORD(ServoPos2)), DXL_HIBYTE(DXL_HIWORD(ServoPos2))]
-        goal_position_3 = [DXL_LOBYTE(DXL_LOWORD(ServoPos3)), DXL_HIBYTE(DXL_LOWORD(ServoPos3)), DXL_LOBYTE(DXL_HIWORD(ServoPos3)), DXL_HIBYTE(DXL_HIWORD(ServoPos3))]
-        goal_position_4 = [DXL_LOBYTE(DXL_LOWORD(ServoPos4)), DXL_HIBYTE(DXL_LOWORD(ServoPos4)), DXL_LOBYTE(DXL_HIWORD(ServoPos4)), DXL_HIBYTE(DXL_HIWORD(ServoPos4))]
+        #goal_position_1 = [DXL_LOBYTE(DXL_LOWORD(ServoPos1)), DXL_HIBYTE(DXL_LOWORD(ServoPos1)), DXL_LOBYTE(DXL_HIWORD(ServoPos1)), DXL_HIBYTE(DXL_HIWORD(ServoPos1))]
+        #goal_position_2 = [DXL_LOBYTE(DXL_LOWORD(ServoPos2)), DXL_HIBYTE(DXL_LOWORD(ServoPos2)), DXL_LOBYTE(DXL_HIWORD(ServoPos2)), DXL_HIBYTE(DXL_HIWORD(ServoPos2))]
+        #goal_position_3 = [DXL_LOBYTE(DXL_LOWORD(ServoPos3)), DXL_HIBYTE(DXL_LOWORD(ServoPos3)), DXL_LOBYTE(DXL_HIWORD(ServoPos3)), DXL_HIBYTE(DXL_HIWORD(ServoPos3))]
+        #goal_position_4 = [DXL_LOBYTE(DXL_LOWORD(ServoPos4)), DXL_HIBYTE(DXL_LOWORD(ServoPos4)), DXL_LOBYTE(DXL_HIWORD(ServoPos4)), DXL_HIBYTE(DXL_HIWORD(ServoPos4))]
+        goal_position_1 = FormatSendData(ServoPos1)
+        goal_position_2 = FormatSendData(ServoPos2)
+        goal_position_3 = FormatSendData(ServoPos3)
+        goal_position_4 = FormatSendData(ServoPos4)
 
         # Add Dynamixel#1 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[0],goal_position_1)
@@ -396,7 +454,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
         dxl_getdata_result = groupSyncRead.isAvailable(limb[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
         if dxl_getdata_result != True:
             print("[ID:%03d] groupSyncRead getdata failed" % limb[3])
-            quit()
+            quit()  
 
         time.sleep(PreferedDelay)
 
@@ -420,8 +478,21 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
 
         time.sleep(PreferedDelay)
 
-        print("[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoPos1, dxl1_present_position, limb[1], ServoPos2, dxl2_present_position))
-        print("[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoPos3, dxl3_present_position, limb[3], ServoPos4, dxl4_present_position))
+        GetPos12 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoPos1, dxl1_present_position, limb[1], ServoPos2, dxl2_present_position)
+        GetPos34 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoPos3, dxl3_present_position, limb[3], ServoPos4, dxl4_present_position)
+        print(GetPos12)
+        print(GetPos34)
+
+        if (filePermission == 'w'):
+            WriteDataToDoc(GetPos12,fileName,0)
+            WriteDataToDoc('\n',fileName,0)
+            WriteDataToDoc(GetPos34,fileName,0)
+        elif (filePermission == 'a'):
+            WriteDataToDoc(GetPos12,fileName,1)
+            WriteDataToDoc('\n',fileName,1)
+            WriteDataToDoc(GetPos34,fileName,1)
+        elif (filePermission == 'n'):
+            pass
 
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
@@ -437,32 +508,29 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn,portHandler,pa
         pass
 
 def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix,portHandler,packetHandler):
-    MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+    MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler,'n','spacefiller')
 
 def MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
-    MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
-    MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
-    MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
-    MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
+    MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
+    MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
+    MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
 
 def StraightenSpine(portHandler,packetHandler):
-    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler)
+    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler,'n','spacefiller')
 
-def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
+def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler,filePermission,fileName):
     index = 1
     start = 0
     while 1:
         if (start == 0):
-            MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
-            MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
-            MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
-            MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+            MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler,filePermission,fileName)
             start = 1
         elif (start == 1):
-            MoveSingleLimb(1,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
-            MoveSingleLimb(2,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
-            MoveSingleLimb(3,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
-            MoveSingleLimb(4,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler)
+            MoveSingleLimb(1,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(2,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(3,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(4,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
         index += 1
         if (index > 21):
             index = 0
@@ -718,16 +786,6 @@ def PrintUserMenu():
     print("4: Other")
     print("5: Exit\n")
 
-def WriteDataToDoc(inData,FileName,FileExist):
-    # If First run, file exist = 0
-    # Set to 1 if already exists or back to 0 if making a new one
-    if (FileExist == 0):
-        f = open(FileName,"w+")
-    elif (FileExist == 1):
-        f = open(FileName,"a+")
-    else:
-        pass
-
 def DisplayServoTraits():
     print("Servo Traits:\n")
     print("1: Model Number")
@@ -778,15 +836,6 @@ def DisplayServoTraits():
     print("46: Position Trajectory")
     print("47: Present Input Voltage")
     print("48: Present Temperature\n")
-
-def DataAddrConversion(DesiredData):
-    DataAddr = -1
-    # Get the address of the desired data trait, used in conjuction with ReturnRelevantData and ChangeSpecificTrait
-    if (DesiredData >= 1 and DesiredData <= 48):
-        DataAddr = AddrDict[DesiredData]
-    else:
-        print("That's not a recognized trait selection, please try again!\n")
-    return DataAddr if DataAddr is not -1 else -1
 
 def ReadTraitData(DesiredData,DesiredServo):
     # Obtain from the desired servo the desired trait data
@@ -1180,9 +1229,6 @@ def ReadTraitData(DesiredData,DesiredServo):
         print("Data does not have a matchable address")
     # Close port
     portHandler.closePort()
-
-### MAYBE USE THESE TWO IN CONJUCTION FOR FUTURE CHANGE OF NUMEROUS SERVOS
-# or just use the sync/bulk functions
 
 def WriteTraitData(DesiredData,DesiredValue,DesiredServo):
     # NEED TO GET RID OF THINGS THAT CAN NOT BE CHANGED!!

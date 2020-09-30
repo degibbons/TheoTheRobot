@@ -16,8 +16,9 @@ MIN_POSITION_LIMIT          = 0
 ADDR_MOVING_THRESHOLD       = 24            #4          10      #ESSENTIALLY ACCURACY TOLERANCE
 MOVING_THRESHOLD_ACCURACY_H = 1
 VELOCITY_LIMIT_H            = 1023
+ADDR_PROFILE_VELOCITY       = 112
 
-PreferedDelay               = 0.1
+PreferedDelay               = 0.01
 
 # Control table address
 ADDR_PRO_BAUDRATE           = 8                             # Control table address is different in Dynamixel model
@@ -76,8 +77,8 @@ OPERATION_MODE              = 0x02                          # 0xFF : reset all v
 COMM_SUCCESS                = 0                             # Communication Success result value
 COMM_TX_FAIL                = -1001                         # Communication Tx Failed
 
-TORQUE_ON               = 1                 # Value for enabling the torque
-TORQUE_OFF              = 0                 # Value for disabling the torque
+TORQUE_ON                   = 1                 # Value for enabling the torque
+TORQUE_OFF                  = 0                 # Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE  = 10           # Dynamixel will rotate between this value
 DXL_MAXIMUM_POSITION_VALUE  = 4000            # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
 DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status threshold

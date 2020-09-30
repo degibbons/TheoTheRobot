@@ -69,9 +69,6 @@ while 1:
                 index += 1
                 if (index > 21):
                     index = 0
-                print("Press any key to continue! (or press ESC to quit!)")
-                if getch() == chr(0x1b):
-                    break
         else:
             pass
     elif (desired_action1 == 2):
@@ -88,59 +85,53 @@ while 1:
         speeds = DetermineSpeeds(timespan,PositionsFile)
         [FrontSpeeds, BackSpeeds] = PostProcessSpeeds(speeds)
         SpeedsArray = np.concatenate((FrontSpeeds,BackSpeeds),axis=1)
+        [filePermission, fileName] = AskAboutFile()
         index = 1
+        MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+        print("Press any key to start (or press ESC to quit).")
+        while 1:
+            if getch() == chr(0x1b):
+                break
         if (desired_servo_limb == 1):
             limb = F_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,1,4,portHandler,packetHandler)
             while 1:
-                MoveSingleLimb(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                MoveSingleLimb(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
                 index += 1
                 if (index > 21):
                     index = 0
-                print("Press any key to continue! (or press ESC to quit!)")
-                if getch() == chr(0x1b):
-                    break
         elif (desired_servo_limb == 2):
             limb = F_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,5,8,portHandler,packetHandler)
             while 1:
-                MoveSingleLimb(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                MoveSingleLimb(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
                 index += 1
                 if (index > 21):
                     index = 0
-                print("Press any key to continue! (or press ESC to quit!)")
-                if getch() == chr(0x1b):
-                    break
         elif (desired_servo_limb == 3):
             limb = B_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,9,12,portHandler,packetHandler)
             while 1:
-                MoveSingleLimb(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                MoveSingleLimb(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
                 index += 1
                 if (index > 21):
                     index = 0
-                print("Press any key to continue! (or press ESC to quit!)")
-                if getch() == chr(0x1b):
-                    break
         elif (desired_servo_limb == 4):
             limb = B_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,13,16,portHandler,packetHandler)
             while 1:
-                MoveSingleLimb(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler)
+                MoveSingleLimb(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
                 index += 1
                 if (index > 21):
                     index = 0
-                print("Press any key to continue! (or press ESC to quit!)")
-                if getch() == chr(0x1b):
-                    break
         elif (desired_servo_limb == 5):
             limb = NECK
             for i in range(limb[0],limb[3]+1):
@@ -177,7 +168,7 @@ while 1:
             [FrontSpeeds, BackSpeeds] = PostProcessSpeeds(speeds)
             SpeedsArray = np.concatenate((FrontSpeeds,BackSpeeds),axis=1)
             TurnOffOnTorque(TORQUE_ON,0,desired_servo_single,0,portHandler,packetHandler)
-            MoveEntireBody(PositionsArray,SpeedsArray,portHandler,packetHandler)
+            MoveEntireBody(PositionsArray,SpeedsArray,portHandler,packetHandler,filePermission,fileName)
             # User stop needs to be added
             # Threading should be used here
         else:
