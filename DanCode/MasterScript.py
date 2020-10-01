@@ -17,6 +17,7 @@ import time
 from ControlTable import *
 from RelevantFunctions import *
 from dynamixel_sdk import *
+from threading import Thread
 
 if os.name == 'nt':
     import msvcrt
@@ -88,50 +89,60 @@ while 1:
         [filePermission, fileName] = AskAboutFile()
         index = 1
         MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
-        print("Press any key to start (or press ESC to quit).")
+        
+        print("Press Enter to start.")
         while 1:
-            if getch() == chr(0x1b):
+            if getch() == chr(0x0D):
                 break
+        print("When done, hit Escape.")
         if (desired_servo_limb == 1):
             limb = F_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,1,4,portHandler,packetHandler)
-            while 1:
-                MoveSingleLimb(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
-                index += 1
-                if (index > 21):
-                    index = 0
+            t1 = Thread(target=LimbLoop,args=(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
+            t2 = Thread(target=DetectStopInput)
+            thread_running = True
+            t1.start()
+            t2.start()
+            t2.join()
+            thread_running = False
         elif (desired_servo_limb == 2):
             limb = F_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,5,8,portHandler,packetHandler)
-            while 1:
-                MoveSingleLimb(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
-                index += 1
-                if (index > 21):
-                    index = 0
+            t1 = Thread(target=LimbLoop,args=(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
+            t2 = Thread(target=DetectStopInput)
+            thread_running = True
+            t1.start()
+            t2.start()
+            t2.join()
+            thread_running = False
         elif (desired_servo_limb == 3):
             limb = B_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,9,12,portHandler,packetHandler)
-            while 1:
-                MoveSingleLimb(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
-                index += 1
-                if (index > 21):
-                    index = 0
+            t1 = Thread(target=LimbLoop,args=(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
+            t2 = Thread(target=DetectStopInput)
+            thread_running = True
+            t1.start()
+            t2.start()
+            t2.join()
+            thread_running = False
         elif (desired_servo_limb == 4):
             limb = B_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,13,16,portHandler,packetHandler)
-            while 1:
-                MoveSingleLimb(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName)
-                index += 1
-                if (index > 21):
-                    index = 0
+            t1 = Thread(target=LimbLoop,args=(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
+            t2 = Thread(target=DetectStopInput)
+            thread_running = True
+            t1.start()
+            t2.start()
+            t2.join()
+            thread_running = False
         elif (desired_servo_limb == 5):
             limb = NECK
             for i in range(limb[0],limb[3]+1):
@@ -168,9 +179,13 @@ while 1:
             [FrontSpeeds, BackSpeeds] = PostProcessSpeeds(speeds)
             SpeedsArray = np.concatenate((FrontSpeeds,BackSpeeds),axis=1)
             TurnOffOnTorque(TORQUE_ON,0,desired_servo_single,0,portHandler,packetHandler)
-            MoveEntireBody(PositionsArray,SpeedsArray,portHandler,packetHandler,filePermission,fileName)
-            # User stop needs to be added
-            # Threading should be used here
+            t1 = Thread(target=MoveEntireBody,args=(PositionsArray,SpeedsArray,portHandler,packetHandler,filePermission,fileName))
+            t2 = Thread(target=DetectStopInput)
+            thread_running = True
+            t1.start()
+            t2.start()
+            t2.join()
+            thread_running = False
         else:
             pass
     elif (desired_action1 == 4):
@@ -211,9 +226,9 @@ while 1:
         elif (desired_action2 == 7):
             PingServos()
         elif (desired_action2 == 8):
-            AllOrOne = input("Are you Rebooting All[2] or One[1] of the servos?: ")
+            AllOrOne = int(input("Are you Rebooting All[2] or One[1] of the servos?: "))
             if (AllOrOne == 1):
-                DesiredServo = input("What Servo do you want to reboot?: ")
+                DesiredServo = int(input("What Servo do you want to reboot?: "))
                 RebootServos(DesiredServo)
             elif (AllOrOne == 2):
                 for i in range(1,25):
@@ -222,9 +237,9 @@ while 1:
             else:
                 pass
         elif (desired_action2 == 9):        
-            AllOrOne = input("Are you Resetting All[2] or One[1] of the servos?: ")
+            AllOrOne = int(input("Are you Resetting All[2] or One[1] of the servos?: "))
             if (AllOrOne == 1):
-                DesiredServo = input("What Servo do you want to reset?: ")
+                DesiredServo = int(input("What Servo do you want to reset?: "))
                 ResetServos(DesiredServo)
             elif (AllOrOne == 2):
                 for i in range(1,25):

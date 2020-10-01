@@ -6,6 +6,9 @@ from dynamixel_sdk import *
 import numpy as np
 import copy as cp
 import time
+from curtsies import Input
+
+stopVal = 0
 
 def InitialSetup():
     # Initialize PortHandler instance
@@ -507,6 +510,25 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
         # Tail
         pass
 
+def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index, portHandler,packetHandler,filePermission,fileName):
+    global stopVal
+    while 1:
+        MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
+        index += 1
+        if (stopVal == 1):
+            break
+        if (index > 21):
+            index = 0
+    
+def DetectStopInput():
+    with Input(keynames='curses') as input_generator:
+        for e in input_generator:
+            if (str(e) == '\x1b'):
+                print("Stopping Servo Movement\n")
+                global stopVal
+                stopVal = 1
+                break
+
 def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix,portHandler,packetHandler):
     MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler,'n','spacefiller')
 
@@ -520,18 +542,25 @@ def StraightenSpine(portHandler,packetHandler):
     MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler,'n','spacefiller')
 
 def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler,filePermission,fileName):
+    global stopVal
     index = 1
     start = 0
     while 1:
         if (start == 0):
-            MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler,filePermission,fileName)
+            MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler)
             start = 1
+            print("Press Enter to start.")
+            while 1:
+                if (getch() == chr(0x0D)):
+                    break
         elif (start == 1):
             MoveSingleLimb(1,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
             MoveSingleLimb(2,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
             MoveSingleLimb(3,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
             MoveSingleLimb(4,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
         index += 1
+        if (stopVal == 1):
+            break
         if (index > 21):
             index = 0
         
