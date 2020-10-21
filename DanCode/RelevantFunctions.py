@@ -298,7 +298,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead addparam failed" % limb[0])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add parameter storage for Dynamixel#2 present position value
         dxl_addparam_result = groupSyncRead.addParam(limb[1])
@@ -306,7 +306,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead addparam failed" % limb[1])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add parameter storage for Dynamixel#3 present position value
         dxl_addparam_result = groupSyncRead.addParam(limb[2])
@@ -314,7 +314,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead addparam failed" % limb[2])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add parameter storage for Dynamixel#4 present position value
         dxl_addparam_result = groupSyncRead.addParam(limb[3])
@@ -322,7 +322,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead addparam failed" % limb[3])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         #goal_velocity_1 = [DXL_LOBYTE(DXL_LOWORD(ServoVel1)), DXL_HIBYTE(DXL_LOWORD(ServoVel1)), DXL_LOBYTE(DXL_HIWORD(ServoVel1)), DXL_HIBYTE(DXL_HIWORD(ServoVel1))]
         #goal_velocity_2 = [DXL_LOBYTE(DXL_LOWORD(ServoVel2)), DXL_HIBYTE(DXL_LOWORD(ServoVel2)), DXL_LOBYTE(DXL_HIWORD(ServoVel2)), DXL_HIBYTE(DXL_HIWORD(ServoVel2))]
@@ -339,7 +339,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[0])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add Dynamixel#2 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[1],goal_velocity_2)
@@ -347,7 +347,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[1])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add Dynamixel#3 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[2],goal_velocity_3)
@@ -355,7 +355,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[2])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add Dynamixel#4 goal velocity value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWriteVEL.addParam(limb[3],goal_velocity_4)
@@ -363,7 +363,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[3])
             quit()
         
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Syncwrite goal velocity
         dxl_comm_result = groupSyncWriteVEL.txPacket()
@@ -388,7 +388,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[0])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add Dynamixel#2 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[1],goal_position_2)
@@ -396,7 +396,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[1])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add Dynamixel#3 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[2],goal_position_3)
@@ -404,7 +404,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[2])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Add Dynamixel#4 goal position value to the Syncwrite parameter storage
         dxl_addparam_result = groupSyncWritePOS.addParam(limb[3],goal_position_4)
@@ -412,7 +412,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncWrite addparam failed" % limb[3])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
         
         # Syncwrite goal position
         dxl_comm_result = groupSyncWritePOS.txPacket()
@@ -427,7 +427,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Check if groupsyncread data of Dynamixel#1 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -435,7 +435,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead getdata failed" % limb[0])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Check if groupsyncread data of Dynamixel#2 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -443,7 +443,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead getdata failed" % limb[1])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Check if groupsyncread data of Dynamixel#3 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -451,7 +451,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead getdata failed" % limb[2])
             quit()
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Check if groupsyncread data of Dynamixel#4 is available
         dxl_getdata_result = groupSyncRead.isAvailable(limb[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -459,27 +459,27 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
             print("[ID:%03d] groupSyncRead getdata failed" % limb[3])
             quit()  
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Get Dynamixel#1 present position value
         dxl1_present_position = groupSyncRead.getData(limb[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Get Dynamixel#2 present position value
         dxl2_present_position = groupSyncRead.getData(limb[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Get Dynamixel#3 present position value
         dxl3_present_position = groupSyncRead.getData(limb[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         # Get Dynamixel#4 present position value
         dxl4_present_position = groupSyncRead.getData(limb[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-        time.sleep(PreferedDelay)
+        #time.sleep(PreferedDelay)
 
         GetPos12 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoPos1, dxl1_present_position, limb[1], ServoPos2, dxl2_present_position)
         GetPos34 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoPos3, dxl3_present_position, limb[3], ServoPos4, dxl4_present_position)
@@ -512,6 +512,60 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
 
 def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index, portHandler,packetHandler,filePermission,fileName):
     global stopVal
+    if (DesiredLimb == 1):
+        limb = F_R_ARM
+    elif (DesiredLimb == 2):
+        limb = F_L_ARM
+    elif (DesiredLimb == 3):
+        limb = B_R_ARM
+    elif (DesiredLimb == 4):
+        limb = B_L_ARM
+    elif (DesiredLimb == 5):
+        limb = NECK
+    elif (DesiredLimb == 6):
+        limb = SPINE
+    elif (DesiredLimb == 7):
+        limb = TAIL
+    else:
+        print("Limb Number Not Recognized")
+        return
+        
+    # Initialize PortHandler instance
+    # Set the port path
+    # Get methods and members of PortHandlerLinux or PortHandlerWindows
+ #   portHandlerCHECK = PortHandler(DEVICENAME)
+
+    # Initialize PacketHandler instance
+    # Set the protocol version
+    # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
+ #   packetHandlerCHECK = PacketHandler(PROTOCOL_VERSION)
+
+    # Initialize GroupSyncRead instace for Moving Status
+    groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_MOVING, LEN_MOVING)
+    
+    dxl_addparam_result = groupSyncRead.addParam(limb[0])
+    if dxl_addparam_result != True:
+        print("[ID:%03d] groupSyncRead addparam failed" % limb[0])
+        quit()
+
+                # Add parameter storage for Dynamixel#2 present position value
+    dxl_addparam_result = groupSyncRead.addParam(limb[1])
+    if dxl_addparam_result != True:
+        print("[ID:%03d] groupSyncRead addparam failed" % limb[1])
+        quit()
+
+                # Add parameter storage for Dynamixel#3 present position value
+    dxl_addparam_result = groupSyncRead.addParam(limb[2])
+    if dxl_addparam_result != True:
+        print("[ID:%03d] groupSyncRead addparam failed" % limb[2])
+        quit()
+
+                # Add parameter storage for Dynamixel#4 present position value
+    dxl_addparam_result = groupSyncRead.addParam(limb[3])
+    if dxl_addparam_result != True:
+        print("[ID:%03d] groupSyncRead addparam failed" % limb[3])
+        quit()
+
     while 1:
         MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
         index += 1
@@ -519,6 +573,37 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index, portHandler,packetHan
             break
         if (index > 21):
             index = 0
+        while 1:
+            # Syncread Moving Value
+            dxl_comm_result = groupSyncRead.txRxPacket()
+            if dxl_comm_result != COMM_SUCCESS:
+                print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+            # Get Dynamixel#1 present Moving value
+            dxl1_mov = groupSyncRead.getData(limb[0], ADDR_MOVING, LEN_MOVING)
+
+ #            time.sleep(PreferedDelay)
+
+            # Get Dynamixel#2 Moving value
+            dxl2_mov = groupSyncRead.getData(limb[1], ADDR_MOVING, LEN_MOVING)
+
+ #            time.sleep(PreferedDelay)
+
+            # Get Dynamixel#3 Moving value
+            dxl3_mov = groupSyncRead.getData(limb[2], ADDR_MOVING, LEN_MOVING)
+
+ #            time.sleep(PreferedDelay)
+
+            # Get Dynamixel#4 Moving value
+            dxl4_mov = groupSyncRead.getData(limb[3], ADDR_MOVING, LEN_MOVING)
+
+            if ((dxl1_mov == 1) or (dxl2_mov == 1) or (dxl3_mov == 1) or (dxl4_mov == 1)):
+                pass
+            else:
+ #               groupSyncRead.clearParam()
+                break
+
+
     
 def DetectStopInput():
     with Input(keynames='curses') as input_generator:
@@ -533,10 +618,10 @@ def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix,portHandler,packetHandle
     MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler,'n','spacefiller')
 
 def MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
-    MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
-    MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
-    MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
-    MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler,'n','spacefiller')
+    MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(2,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(3,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+    MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
 
 def StraightenSpine(portHandler,packetHandler):
     MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler,'n','spacefiller')
