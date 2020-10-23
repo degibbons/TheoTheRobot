@@ -17,6 +17,7 @@ ADDR_MOVING_THRESHOLD       = 24            #4          10      #ESSENTIALLY ACC
 MOVING_THRESHOLD_ACCURACY_H = 1
 VELOCITY_LIMIT_H            = 1023
 ADDR_PROFILE_VELOCITY       = 112
+ADDR_MOVING                 = 122           
 
 PreferedDelay               = 0.01
 
@@ -87,6 +88,7 @@ DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status thresh
 LEN_PRO_GOAL_POSITION       = 4
 LEN_PRO_PRESENT_POSITION    = 4
 LEN_VELOCITY_LIMIT          = 4
+LEN_MOVING                  = 1
 
 FileExist = 0       #Indicates if the file data is written to exists or not
 

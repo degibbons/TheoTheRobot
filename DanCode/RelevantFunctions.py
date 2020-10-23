@@ -1,5 +1,7 @@
 ## NEEDS COMMENTS
 
+#Also put default values for functions that need them
+
 import os
 from ControlTable import *
 from dynamixel_sdk import *
@@ -483,8 +485,13 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
 
         GetPos12 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoPos1, dxl1_present_position, limb[1], ServoPos2, dxl2_present_position)
         GetPos34 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoPos3, dxl3_present_position, limb[3], ServoPos4, dxl4_present_position)
+        GetVel12 = "[ID:%03d] Velocity Given:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoVel1, limb[1], ServoVel2, dxl2_present_position)
+        GetVel34 = "[ID:%03d] Velocity Given:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoVel3, limb[3], ServoVel4, dxl4_present_position)
+
         print(GetPos12)
+        print(GetVel12)
         print(GetPos34)
+        print(GetVel34)
 
         if (filePermission == 'w'):
             WriteDataToDoc(GetPos12,fileName,0)
@@ -603,8 +610,6 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index, portHandler,packetHan
  #               groupSyncRead.clearParam()
                 break
 
-
-    
 def DetectStopInput():
     with Input(keynames='curses') as input_generator:
         for e in input_generator:
@@ -670,9 +675,10 @@ def DetermineSpeeds(tspan,positionsFile):
     f_st_per = f_stance / 8.24
     f_sw_per = f_swing / 8.24
     b = speeds.shape
-    cLength = b[0]
+    cLen = b[0]
+    cLength = cLen/2
     cWidth = b[1]
-    percents = np.linspace(1,cLength-1,cLength-1)
+    percents = np.linspace(1,cLen-1,cLen-1)
     joints = list(range(1,cWidth+1))
     percents = percents.astype(int).tolist()
     for i in percents:
@@ -778,6 +784,8 @@ def PostProcessSpeeds(speeds):
     HL_3_Stride = np.concatenate((HL_3_Stance,HL_3_Swing),axis=0)
     HL_4_Stride = np.concatenate((HL_4_Stance,HL_4_Swing),axis=0)
 
+
+    # Shift Number for limb #1 is shifted up by 1 (not present here, number becomes 2 instead of 1)
     ServoVel1 = RotatePositionArray(FL_1_Stride,1,len(FL_1_Stride)) 
     ServoVel2 = RotatePositionArray(FL_2_Stride,1,len(FL_2_Stride))
     ServoVel3 = RotatePositionArray(FL_3_Stride,1,len(FL_3_Stride))

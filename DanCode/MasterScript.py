@@ -9,8 +9,6 @@
 
 ### NEED ERROR CHECKING PORTIONS
 
-# Need to implement threading to stop movement when button is pressed during cycling
-
 import os
 import numpy as np
 import time
@@ -88,18 +86,36 @@ while 1:
         SpeedsArray = np.concatenate((FrontSpeeds,BackSpeeds),axis=1)
         [filePermission, fileName] = AskAboutFile()
         index = 1
-        MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
-        
-        print("Press Enter to start.")
-        while 1:
-            if getch() == chr(0x0D):
-                break
-        print("When done, hit Escape.")
         if (desired_servo_limb == 1):
             limb = F_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,1,4,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+        elif (desired_servo_limb == 2):
+            limb = F_L_ARM
+            for i in range(limb[0],limb[3]+1):
+                SetServoTraits(i,portHandler,packetHandler)
+            TurnOffOnTorque(TORQUE_ON,1,5,8,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+        elif (desired_servo_limb == 3):
+            limb = B_R_ARM
+            for i in range(limb[0],limb[3]+1):
+                SetServoTraits(i,portHandler,packetHandler)
+            TurnOffOnTorque(TORQUE_ON,1,9,12,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+        elif (desired_servo_limb == 4):
+            limb = B_L_ARM
+            for i in range(limb[0],limb[3]+1):
+                SetServoTraits(i,portHandler,packetHandler)
+            TurnOffOnTorque(TORQUE_ON,1,13,16,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+        print("Press Enter to start when ready.")
+        print("When done, hit Escape.")
+        while 1:
+            if getch() == chr(0x0D):
+                break
+        if (desired_servo_limb == 1):
             t1 = Thread(target=LimbLoop,args=(1,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
             t2 = Thread(target=DetectStopInput)
             thread_running = True
@@ -108,10 +124,6 @@ while 1:
             t2.join()
             thread_running = False
         elif (desired_servo_limb == 2):
-            limb = F_L_ARM
-            for i in range(limb[0],limb[3]+1):
-                SetServoTraits(i,portHandler,packetHandler)
-            TurnOffOnTorque(TORQUE_ON,1,5,8,portHandler,packetHandler)
             t1 = Thread(target=LimbLoop,args=(2,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
             t2 = Thread(target=DetectStopInput)
             thread_running = True
@@ -120,10 +132,6 @@ while 1:
             t2.join()
             thread_running = False
         elif (desired_servo_limb == 3):
-            limb = B_R_ARM
-            for i in range(limb[0],limb[3]+1):
-                SetServoTraits(i,portHandler,packetHandler)
-            TurnOffOnTorque(TORQUE_ON,1,9,12,portHandler,packetHandler)
             t1 = Thread(target=LimbLoop,args=(3,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
             t2 = Thread(target=DetectStopInput)
             thread_running = True
@@ -132,10 +140,6 @@ while 1:
             t2.join()
             thread_running = False
         elif (desired_servo_limb == 4):
-            limb = B_L_ARM
-            for i in range(limb[0],limb[3]+1):
-                SetServoTraits(i,portHandler,packetHandler)
-            TurnOffOnTorque(TORQUE_ON,1,13,16,portHandler,packetHandler)
             t1 = Thread(target=LimbLoop,args=(4,PositionsArray,SpeedsArray,index,portHandler,packetHandler,filePermission,fileName))
             t2 = Thread(target=DetectStopInput)
             thread_running = True
