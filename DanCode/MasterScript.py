@@ -68,6 +68,7 @@ while 1:
                 index += 1
                 if (index > 21):
                     index = 0
+                # Currently needs a way to stop (preferably with threading)
         else:
             pass
     elif (desired_action1 == 2):
@@ -91,25 +92,25 @@ while 1:
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,1,4,portHandler,packetHandler)
-            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,MoveHomeSpeedMatrix,portHandler,packetHandler)
         elif (desired_servo_limb == 2):
             limb = F_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,5,8,portHandler,packetHandler)
-            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,MoveHomeSpeedMatrix,portHandler,packetHandler)
         elif (desired_servo_limb == 3):
             limb = B_R_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,9,12,portHandler,packetHandler)
-            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,MoveHomeSpeedMatrix,portHandler,packetHandler)
         elif (desired_servo_limb == 4):
             limb = B_L_ARM
             for i in range(limb[0],limb[3]+1):
                 SetServoTraits(i,portHandler,packetHandler)
             TurnOffOnTorque(TORQUE_ON,1,13,16,portHandler,packetHandler)
-            MoveLimbHome(desired_servo_limb,PositionsArray,SpeedsArray,portHandler,packetHandler)
+            MoveLimbHome(desired_servo_limb,PositionsArray,MoveHomeSpeedMatrix,portHandler,packetHandler)
         print("Press Enter to start when ready.")
         print("When done, hit Escape.")
         while 1:
@@ -176,7 +177,7 @@ while 1:
         desired_action3 = int(input("Would you like to move the robot to Home Position[1]? Or through an entire stride[2]?"))
         if (desired_action3 == 1):
             StraightenSpine(portHandler,packetHandler)
-            MoveLimbsHome(PositionsArray,STRAIGHT_SPEED_ARRAY,portHandler,packetHandler) #May not be ok as far as passing in just a list (need array?)
+            MoveLimbsHome(PositionsArray,MoveHomeSpeedMatrix,portHandler,packetHandler) #May not be ok as far as passing in just a list (need array?)
         elif (desired_action3 == 2):
             timespan = float(input("Please enter the amount of seconds you'd like one stride to take: "))
             speeds = DetermineSpeeds(timespan,PositionsFile)
@@ -193,7 +194,7 @@ while 1:
         else:
             pass
     elif (desired_action1 == 4):
-        print("---------SUBMENU---------")
+        print("\n---------SUBMENU---------")
         print("1: Turn Torque setting off for all servos")
         print("2: Turn Torque setting on for all servos")
         print("3: Turn Torque setting off for specific servo")

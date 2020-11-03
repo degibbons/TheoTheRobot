@@ -102,6 +102,7 @@ def AskAboutFile():
     recordInput = input("Do you want to Record the Servo Data to a file? [Y/N]: ")
     if (recordInput.lower() == "y"):
         doesFileExist = input("Do you want to add to an existing file[0] or start a new one[1]?: ")
+        # Need to check if file does in fact exist if 0  was input !!
         if (doesFileExist == 1):
             filePermission = 'w'
             print("Your data file will be saved in the Records sub-folder.\n")
@@ -221,7 +222,7 @@ def MoveSingleServo(ServoID,DesPos,portHandler,packetHandler):
     else:
         print("[ID:%03d] Goal Position set to: %03d" %(ServoID, DesPos))
 
-def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,packetHandler,filePermission,fileName):
+def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, StrideIndex, portHandler,packetHandler,filePermission,fileName):
     # Initialize GroupSyncWrite instance
     groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
@@ -233,7 +234,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
 
     if (DesiredLimb == 1):
         limb = F_R_ARM
-
+        limbNum = 1
         ServoPos1 = PositionMatrix[indexIn,0]
         ServoPos2 = PositionMatrix[indexIn,1]
         ServoPos3 = PositionMatrix[indexIn,2]
@@ -246,7 +247,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
 
     elif (DesiredLimb == 2):
         limb = F_L_ARM
-
+        limbNum = 2
         ServoPos1 = PositionMatrix[indexIn,4]
         ServoPos2 = PositionMatrix[indexIn,5]
         ServoPos3 = PositionMatrix[indexIn,6]
@@ -259,7 +260,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
                 
     elif (DesiredLimb == 3):
         limb = B_R_ARM
-
+        limbNum = 3
         ServoPos1 = PositionMatrix[indexIn,8]
         ServoPos2 = PositionMatrix[indexIn,9]
         ServoPos3 = PositionMatrix[indexIn,10]
@@ -272,7 +273,7 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
         
     elif (DesiredLimb == 4):
         limb = B_L_ARM
-
+        limbNum = 4
         ServoPos1 = PositionMatrix[indexIn,12]
         ServoPos2 = PositionMatrix[indexIn,13]
         ServoPos3 = PositionMatrix[indexIn,14]
@@ -487,11 +488,16 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
         GetPos34 = "[ID:%03d] GoalPos:%03d  PresPos:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoPos3, dxl3_present_position, limb[3], ServoPos4, dxl4_present_position)
         GetVel12 = "[ID:%03d] Velocity Given:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[0], ServoVel1, limb[1], ServoVel2, dxl2_present_position)
         GetVel34 = "[ID:%03d] Velocity Given:%03d\t[ID:%03d] GoalPos:%03d  PresPos:%03d" % (limb[2], ServoVel3, limb[3], ServoVel4, dxl4_present_position)
+        GetMoveIndex = f"Movement #{StrideIndex}"
 
+        print("\n")
+        print("==========================================================================================")
+        print(GetMoveIndex)
         print(GetPos12)
         print(GetVel12)
         print(GetPos34)
         print(GetVel34)
+        print("==========================================================================================")
 
         if (filePermission == 'w'):
             WriteDataToDoc(GetPos12,fileName,0)
@@ -506,6 +512,15 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
 
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
+        # Limb Number, Servo Number, Goal Position, Present Position, Speed Given to get to Goal Position, 
+        # Is this Home Position?, Is This the First Position Moved after home position?, What Number Stride is this,
+        # Is This Stance or Swing?, What Index in Stance or Swing is this?, What Time Value in Stance or Swing Is this?,
+        # What time in stance or swing is this?, What Index in the whole Stride is this?, What time value within the whole stride is this?,
+        # What Time overall is this?
+        DataList1 = [limbNum, 1, ServoPos1, dxl1_present_position, ServoVel1,]
+        DataList2 = [limbNum, 2, ServoPos2, dxl2_present_position, ServoVel2,]
+        DataList3 = [limbNum, 3, ServoPos3, dxl3_present_position, ServoVel3,]
+        DataList4 = [limbNum, 4, ServoPos4, dxl4_present_position, ServoVel4,]
 
     elif (DesiredLimb == 5):
         # Neck
@@ -516,8 +531,8 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, portHandler,p
     elif (DesiredLimb == 7):
         # Tail
         pass
-
-def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index, portHandler,packetHandler,filePermission,fileName):
+    
+def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName):
     global stopVal
     if (DesiredLimb == 1):
         limb = F_R_ARM
@@ -572,14 +587,15 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index, portHandler,packetHan
     if dxl_addparam_result != True:
         print("[ID:%03d] groupSyncRead addparam failed" % limb[3])
         quit()
-
+    StrideIndex = 1
     while 1:
-        MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
+        MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,index,StrideIndex,portHandler,packetHandler,filePermission,fileName)
         index += 1
         if (stopVal == 1):
             break
         if (index > 21):
             index = 0
+            StrideIndex += 1
         while 1:
             # Syncread Moving Value
             dxl_comm_result = groupSyncRead.txRxPacket()
@@ -620,7 +636,7 @@ def DetectStopInput():
                 break
 
 def MoveLimbHome(DesiredLimb,PositionMatrix,SpeedMatrix,portHandler,packetHandler):
-    MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,portHandler,packetHandler,'n','spacefiller')
+    MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,0,0,portHandler,packetHandler,'n','spacefiller')
 
 def MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
     MoveLimbHome(1,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
@@ -629,30 +645,32 @@ def MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler):
     MoveLimbHome(4,PositionMatrix,SpeedMatrix,portHandler,packetHandler)
 
 def StraightenSpine(portHandler,packetHandler):
-    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,STRAIGHT_SPEED_ARRAY,0,portHandler,packetHandler,'n','spacefiller')
+    MoveSingleLimb(6,STRAIGHT_SPINE_ARRAY,MoveHomeSpeedMatrix,0,0,portHandler,packetHandler,'n','spacefiller')
 
 def MoveEntireBody(PositionMatrix,SpeedMatrix,portHandler,packetHandler,filePermission,fileName):
     global stopVal
     index = 1
     start = 0
+    StrideIndex = 1
     while 1:
         if (start == 0):
-            MoveLimbsHome(PositionMatrix,SpeedMatrix,portHandler,packetHandler)
+            MoveLimbsHome(PositionMatrix,MoveHomeSpeedMatrix,portHandler,packetHandler)
             start = 1
             print("Press Enter to start.")
             while 1:
                 if (getch() == chr(0x0D)):
                     break
         elif (start == 1):
-            MoveSingleLimb(1,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
-            MoveSingleLimb(2,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
-            MoveSingleLimb(3,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
-            MoveSingleLimb(4,PositionMatrix,SpeedMatrix,index,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(1,PositionMatrix,SpeedMatrix,index,StrideIndex,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(2,PositionMatrix,SpeedMatrix,index,StrideIndex,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(3,PositionMatrix,SpeedMatrix,index,StrideIndex,portHandler,packetHandler,filePermission,fileName)
+            MoveSingleLimb(4,PositionMatrix,SpeedMatrix,index,StrideIndex,portHandler,packetHandler,filePermission,fileName)
         index += 1
         if (stopVal == 1):
             break
         if (index > 21):
             index = 0
+            StrideIndex += 1
         
 def DetermineSpeeds(tspan,positionsFile):
     import numpy as np

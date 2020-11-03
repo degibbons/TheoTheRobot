@@ -5,7 +5,7 @@ ADDR_PRO_PRESENT_POSITION   = 132
 ADDR_VELOCITY_LIMIT         = 44            #4
 ADDR_DRIVE_MODE             = 10            #1          0       # |0=vELOCITY BASED| 1=TIME_BASED|
 DRIVE_MODE_VEL_BASED        = 0            #establish default drive mode, time or vel based
-ADDR_OPERATING_MODE         = 11            #1          3       # |0	Current Control Mode	DYNAMIXEL only controls current(torque) regardless of speed and position. This mode is ideal for a gripper or a system that only uses current(torque) control or a system that has additional velocity/position controllers.
+ADDR_OPERATING_MODE         = 11            #1          3       # |0	Current Control Mode	DYNAMIXEL only controls current(torque) regardless of spe ed and position. This mode is ideal for a gripper or a system that only uses current(torque) control or a system that has additional velocity/position controllers.
 OPERATING_JOINT_POSITION_MODE = 3
 ADDR_ACCELERATION_LIMIT     = 40            #4          32767
 ACCELERATION_LIMIT_M        = 1000
@@ -163,7 +163,7 @@ FL_TOT_L_4 = FL_ST_L_4 + FL_SW_L_4
 STRAIGHT_SPINE = 2048
 STRAIGHT_SPEED = 50
 STRAIGHT_SPINE_ARRAY = [STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE, STRAIGHT_SPINE]
-STRAIGHT_SPEED_ARRAY = [STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED]
+#STRAIGHT_SPEED_ARRAY = [STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED, STRAIGHT_SPEED]
 
 # Selections corresponding to Addresses
 # Selections originate from DisplayServoTraits Function
@@ -218,3 +218,7 @@ AddrDict = {                          #Byte Size
     47: 144, # Present Input Voltage    2   
     48: 146 # Present Temperature       1  
 }
+
+
+rows, cols = (22, 16) 
+MoveHomeSpeedMatrix = [[STRAIGHT_SPEED for i in range(cols)] for j in range(rows)]
