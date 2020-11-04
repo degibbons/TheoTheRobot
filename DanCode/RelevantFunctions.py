@@ -222,7 +222,7 @@ def MoveSingleServo(ServoID,DesPos,portHandler,packetHandler):
     else:
         print("[ID:%03d] Goal Position set to: %03d" %(ServoID, DesPos))
 
-def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, StrideIndex, portHandler,packetHandler,filePermission,fileName):
+def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, StrideIndex, portHandler,packetHandler,filePermission,fileName,*args):
     # Initialize GroupSyncWrite instance
     groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
@@ -512,15 +512,94 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, StrideIndex, 
 
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
+
+        if limbNum == 1:
+            StartIndex = 
+            EndIndex = 
+            HomeIndex = 
+            FirstMoveIndex = 
+            St2SwIndex = 
+            Sw2StIndex = 
+        elif limbNum == 2:
+            StartIndex = 
+            EndIndex = 
+            HomeIndex = 
+            FirstMoveIndex = 
+            St2SwIndex = 
+            Sw2StIndex = 
+        elif limbNumb == 3:
+            StartIndex = 
+            EndIndex = 
+            HomeIndex = 
+            FirstMoveIndex = 
+            St2SwIndex = 
+            Sw2StIndex = 
+        elif limbNumb == 4:
+            StartIndex = 
+            EndIndex = 
+            HomeIndex = 
+            FirstMoveIndex = 
+            St2SwIndex = 
+            Sw2StIndex = 
+            
+
+        if indexIn == 0:
+            HomePosCheck = 1
+            FirstMoveCheck = 0
+            STorSW = 0
+            PhaseIndex = 0
+        else:
+            HomePosCheck = 0
+
+            if indexIn == 1:
+                FirstMoveCheck = 1
+            else:
+                FirstMoveCheck = 0
+
+            if indexIn >= 1 and indexIn <=10:
+                STorSW = 1
+            elif indexIn >= 12 and indexIn <= 21:
+                STorSW = -1
+            elif indexIn == 0 or indexIn == 11:
+                STorSW = 0
+
+            if indexIn > 10:
+                PhaseIndex = indexIn - 11
+            else:
+                PhaseIndex = indexIn
+
+        
+        
+        # ^^^ THESE WILL CHANGE BECAUSE THE POSITIONS BECOME SHIFTED 
+
+        # MAKE the numbers variables that change with respect to what limb is being checked
+        
+
+        if args:
+            BeginTime = args[0]
+            PhaseTime = args[1]
+            StrideTime = args[2]
+
+        
+        TimeMarker2 = time.perf_counter()
+        TimeMarker3 = time.perf_counter()
+        TimeMarker4 = time.perf_counter()
+        TimeMarkerSlowest = time.perf_counter
+        
+        PhaseTime = BeginTime - 
+        StrideTime = BeginTime - 
+        TotTime = BeginTime - 
+
+
         # Limb Number, Servo Number, Goal Position, Present Position, Speed Given to get to Goal Position, 
-        # Is this Home Position?, Is This the First Position Moved after home position?, What Number Stride is this,
-        # Is This Stance or Swing?, What Index in Stance or Swing is this?, What Time Value in Stance or Swing Is this?,
-        # What time in stance or swing is this?, What Index in the whole Stride is this?, What time value within the whole stride is this?,
-        # What Time overall is this?
-        DataList1 = [limbNum, 1, ServoPos1, dxl1_present_position, ServoVel1,]
-        DataList2 = [limbNum, 2, ServoPos2, dxl2_present_position, ServoVel2,]
-        DataList3 = [limbNum, 3, ServoPos3, dxl3_present_position, ServoVel3,]
-        DataList4 = [limbNum, 4, ServoPos4, dxl4_present_position, ServoVel4,]
+        # Is this Home Position?, Is This the First Position Moved after home position?, What Number Stride is this, 
+        # Is This Stance or Swing?, What Index in Stance or Swing is this?, What Time Value in Stance or Swing Is this?[Time from begining of stance to now],
+        #  What Index in the whole Stride is this[Time from beginning of Stride to now]?, What time value within the whole stride is this?,
+        # How long did this one movement take?, What Time overall is this?
+        DataList1 = [limbNum, 1, ServoPos1, dxl1_present_position, ServoVel1, HomePosCheck, FirstMoveCheck, StrideIndex, STorSW, PhaseIndex, PhaseTime, indexIn, StrideTime, MoveTime1, TotTime]
+        DataList2 = [limbNum, 2, ServoPos2, dxl2_present_position, ServoVel2, HomePosCheck, FirstMoveCheck, StrideIndex, STorSW, PhaseIndex, PhaseTime, indexIn, StrideTime, MoveTime2, TotTime]
+        DataList3 = [limbNum, 3, ServoPos3, dxl3_present_position, ServoVel3, HomePosCheck, FirstMoveCheck, StrideIndex, STorSW, PhaseIndex, PhaseTime, indexIn, StrideTime, MoveTime3, TotTime]
+        DataList4 = [limbNum, 4, ServoPos4, dxl4_present_position, ServoVel4, HomePosCheck, FirstMoveCheck, StrideIndex, STorSW, PhaseIndex, PhaseTime, indexIn, StrideTime, MoveTime4, TotTime]
 
     elif (DesiredLimb == 5):
         # Neck
@@ -596,6 +675,10 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHand
         if (index > 21):
             index = 0
             StrideIndex += 1
+        key1 = 0
+        key2 = 0
+        key3 = 0
+        key4 = 0
         while 1:
             # Syncread Moving Value
             dxl_comm_result = groupSyncRead.txRxPacket()
@@ -604,27 +687,39 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHand
 
             # Get Dynamixel#1 present Moving value
             dxl1_mov = groupSyncRead.getData(limb[0], ADDR_MOVING, LEN_MOVING)
+            if (dxl1_mov == 0) and (key1 = 0):
+                TimeMarker1 = time.perf_counter()
+                key1 = 1
+
 
  #            time.sleep(PreferedDelay)
 
             # Get Dynamixel#2 Moving value
             dxl2_mov = groupSyncRead.getData(limb[1], ADDR_MOVING, LEN_MOVING)
-
+            if (dxl2_mov == 0) and (key2 = 0):
+                TimeMarker2 = time.perf_counter()
+                key2 = 1
  #            time.sleep(PreferedDelay)
 
             # Get Dynamixel#3 Moving value
             dxl3_mov = groupSyncRead.getData(limb[2], ADDR_MOVING, LEN_MOVING)
-
+            if (dxl3_mov == 0) and (key3 = 0):
+                TimeMarker3 = time.perf_counter()
+                key3 = 1
  #            time.sleep(PreferedDelay)
 
             # Get Dynamixel#4 Moving value
             dxl4_mov = groupSyncRead.getData(limb[3], ADDR_MOVING, LEN_MOVING)
+            if (dxl4_mov == 0) and (key4 = 0):
+                TimeMarker4 = time.perf_counter()
+                key4 = 1
 
             if ((dxl1_mov == 1) or (dxl2_mov == 1) or (dxl3_mov == 1) or (dxl4_mov == 1)):
                 pass
             else:
  #               groupSyncRead.clearParam()
                 break
+        # Write Data to Document HERE
 
 def DetectStopInput():
     with Input(keynames='curses') as input_generator:
