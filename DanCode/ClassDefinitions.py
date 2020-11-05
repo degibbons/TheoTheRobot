@@ -1,4 +1,9 @@
 import time
+import RelevantFunctions
+import os
+from ControlTable import *
+from dynamixel_sdk import *
+
 
 class Servo:
     def __init__(self,IDnum):
@@ -21,6 +26,35 @@ class Servo:
         else:
             self.Limbnum = 0
         
+            # Initialize PortHandler instance
+        # Set the port path
+        # Get methods and members of PortHandlerLinux or PortHandlerWindows
+        self.portHandler = PortHandler(DEVICENAME)
+
+        # Initialize PacketHandler instance
+        # Set the protocol version
+        # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
+        self.packetHandler = PacketHandler(PROTOCOL_VERSION)
+
+        # Open port
+        if self.portHandler.openPort():
+            print("Succeeded to open the port")
+        else:
+            print("Failed to open the port")
+            print("Press any key to terminate...")
+            getch() # pylint: disable=undefined-variable
+            quit()
+
+
+        # Set port baudrate
+        if self.portHandler.setBaudRate(BAUDRATE):
+            print("Succeeded to change the baudrate")
+        else:
+            print("Failed to change the baudrate")
+            print("Press any key to terminate...")
+            getch() # pylint: disable=undefined-variable
+            quit()
+
         self.Positions = []
 
         self.Speeds = []
@@ -37,13 +71,11 @@ class Servo:
 
         self.PresentPosition = []
 
-        self.PresentSpeed = [] # Probably is not needed, GivenSpeed should suffice
-
         self.GivenPosition = []
 
         self.GivenSpeed = []
 
-        self.MovementTime = []
+        self.MovementTime = [] # Length of time for the last movement given
 
         self.PhaseIndex = [] 
 
@@ -57,16 +89,105 @@ class Servo:
 
 
     def InitialSetup(self): # Use SetServoTraits to fill this
-        pass
+        #Set drive mode to velocity based
+        dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, self.ID, ADDR_DRIVE_MODE, DRIVE_MODE_VEL_BASED)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Drive mode set to: %03d" %(self.ID, DRIVE_MODE_VEL_BASED))
 
-    def ToggleTorque(self):
-        pass
+        time.sleep(PreferedDelay)
 
-    def MoveServo(self):
-        pass
+        #Set operating mode to joint/position control mode
+        dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, self.ID, ADDR_OPERATING_MODE, OPERATING_JOINT_POSITION_MODE)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Operating mode set to: %03d" %(self.ID, OPERATING_JOINT_POSITION_MODE))
+
+        time.sleep(PreferedDelay)
+
+        #Set acceleration limit 
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_ACCELERATION_LIMIT, ACCELERATION_LIMIT_M)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Acceleration limit set to: %03d" %(self.ID, ACCELERATION_LIMIT_M))
+
+        time.sleep(PreferedDelay)
+
+        #Set max position limit
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_MAX_POSITION_LIMIT, MAX_POSITION_LIMIT)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Max position limit set to: %03d" %(self.ID, MAX_POSITION_LIMIT))
+
+        time.sleep(PreferedDelay)
+
+        #Set min position limit
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_MIN_POSITION_LIMIT, MIN_POSITION_LIMIT)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Min position limit set to: %03d" %(self.ID, MIN_POSITION_LIMIT))
+
+        time.sleep(PreferedDelay)
+
+        #Set moving threshold
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_MOVING_THRESHOLD, MOVING_THRESHOLD_ACCURACY_H)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Moving accuracy set to high: %03d" %(self.ID, MOVING_THRESHOLD_ACCURACY_H))
+
+        time.sleep(PreferedDelay)
+
+    def ToggleTorque(self,OnOrOff):
+        dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(portHandler, self.ID, ADDR_PRO_TORQUE_ENABLE, OnOrOff)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % packetHandler.getRxPacketError(dxl_error))
+        else:
+            if (OnOrOff == 1):
+                print("Dynamixel#%d torque on" % self.ID)
+            elif (OnOrOff == 0):
+                print("Dynamixel#%d torque off" % self.ID)
+
+    def SetServoVelocity(self):
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PROFILE_VELOCITY, VELOCITY_LIMIT_H)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Velocity limit set to: %03d" %(self.ID, VELOCITY_LIMIT_H))
+
+    def MoveServo(self,DesPos):
+         # Write goal position
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PRO_GOAL_POSITION, DesPos)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+        else:
+            print("[ID:%03d] Goal Position set to: %03d" %(self.ID, DesPos))
 
     def MoveHome(self):
-        pass
+        self.MoveServo()
 
     def StartTimer(self):
         pass
@@ -74,14 +195,194 @@ class Servo:
     def EndTimer(self):
         pass
 
+    def UpdateValues(self):
+        pass
+
     def DisplayTraitValues(self):
         pass
 
     def RebootServo(self):
-        pass
+        import os
+
+        if os.name == 'nt':
+            import msvcrt
+            def getch():
+                return msvcrt.getch().decode()
+        else:
+            
+            import sys, tty, termios # pylint: disable=import-error
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            def getch():
+                try:
+                    tty.setraw(sys.stdin.fileno())
+                    ch = sys.stdin.read(1)
+                finally:
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                return ch
+
+        # Open port
+        if self.portHandler.openPort():
+            print("Succeeded to open the port")
+        else:
+            print("Failed to open the port")
+            print("Press any key to terminate...")
+            getch()
+            quit()
+
+        # Set port baudrate
+        if self.portHandler.setBaudRate(BAUDRATE):
+            print("Succeeded to change the baudrate")
+        else:
+            print("Failed to change the baudrate")
+            print("Press any key to terminate...")
+            getch()
+            quit()
+
+        # Trigger
+        print("Press any key to reboot")
+        getch()
+
+        print("See the Dynamixel LED flickering")
+        # Try reboot
+        # Dynamixel LED will flicker while it reboots
+        dxl_comm_result, dxl_error = self.packetHandler.reboot(self.portHandler, self.ID)
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+        elif dxl_error != 0:
+            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+
+        print("[ID:%03d] reboot Succeeded\n" % self.ID)
+
+
+        # Close port
+        #portHandler.closePort()
 
     def ResetServo(self):
-        pass
+        #resets settings of Dynamixel to default values. The Factoryreset function has three operation modes:
+        #0xFF : reset all values (ID to 1, baudrate to 57600)
+        #0x01 : reset all values except ID (baudrate to 57600)
+        #0x02 : reset all values except ID and baudrate.
+
+        import os, sys
+
+        if os.name == 'nt':
+            import msvcrt
+            def getch():
+                return msvcrt.getch().decode()
+        else:
+            import tty, termios # pylint: disable=import-error
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            tty.setraw(sys.stdin.fileno())
+            def getch():
+                return sys.stdin.read(1)
+
+        os.sys.path.append('../dynamixel_functions_py')             # Path setting
+
+        from time import sleep
+        import dynamixel_functions as dynamixel                     # Uses DYNAMIXEL SDK library
+
+        # Initialize PortHandler Structs
+        # Set the port path
+        # Get methods and members of PortHandlerLinux or PortHandlerWindows
+        port_num = dynamixel.portHandler(DEVICENAME)
+
+        # Initialize PacketHandler Structs
+        dynamixel.packetHandler()
+
+        dxl_comm_result = COMM_TX_FAIL                              # Communication result
+
+        dxl_error = 0                                               # Dynamixel error
+        dxl_baudnum_read = 0                                        # Read baudnum
+
+        # Open port
+        if dynamixel.openPort(port_num):
+            print("Succeeded to open the port!")
+        else:
+            print("Failed to open the port!")
+            print("Press any key to terminate...")
+            getch()
+            quit()
+
+        # Set port baudrate
+        if dynamixel.setBaudRate(port_num, BAUDRATE):
+            print("Succeeded to change the baudrate!")
+        else:
+            print("Failed to change the baudrate!")
+            print("Press any key to terminate...")
+            getch()
+            quit()
+
+
+        # Read present baudrate of the controller
+        print("Now the controller baudrate is : %d" % (dynamixel.getBaudRate(port_num)))
+
+        # Try factoryreset
+        print("[ID:%03d] Try factoryreset : " % (self.ID))
+        dynamixel.factoryReset(port_num, PROTOCOL_VERSION, self.ID, OPERATION_MODE)
+        if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+            print("Aborted")
+            dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+            quit()
+        elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+            dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+
+
+        # Wait for reset
+        print("Wait for reset...")
+        sleep(2)
+
+        print("[ID:%03d] factoryReset Success!" % (self.ID))
+
+        # Set controller baudrate to dxl default baudrate
+        if dynamixel.setBaudRate(port_num, FACTORYRST_DEFAULTBAUDRATE):
+            print("Succeed to change the controller baudrate to : %d" % (FACTORYRST_DEFAULTBAUDRATE))
+        else:
+            print("Failed to change the controller baudrate")
+            getch()
+            quit()
+
+        # Read Dynamixel baudnum
+        dxl_baudnum_read = dynamixel.read1ByteTxRx(port_num, PROTOCOL_VERSION, self.ID, ADDR_PRO_BAUDRATE)
+        if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+            dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+        elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+            dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+        else:
+          print("[ID:%03d] Dynamixel baudnum is now : %d" % (self.ID, dxl_baudnum_read))
+
+        # Write new baudnum
+        dynamixel.write1ByteTxRx(port_num, PROTOCOL_VERSION, self.ID, ADDR_PRO_BAUDRATE, NEW_BAUDNUM)
+        if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+            dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+        elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+            dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+        else:
+          print("[ID:%03d] Set Dynamixel baudnum to : %d" % (self.ID, NEW_BAUDNUM))
+
+        # Set port baudrate to BAUDRATE
+        if dynamixel.setBaudRate(port_num, BAUDRATE):
+            print("Succeed to change the controller baudrate to : %d" % (BAUDRATE))
+        else:
+            print("Failed to change the controller baudrate")
+            getch()
+            quit()
+
+        sleep(0.2)
+
+        # Read Dynamixel baudnum
+        dxl_baudnum_read = dynamixel.read1ByteTxRx(port_num, PROTOCOL_VERSION, self.ID, ADDR_PRO_BAUDRATE)
+        if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
+            dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
+        elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
+            dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
+        else:
+          print("[ID:%03d] Dynamixel baudnum is now : %d" % (self.ID, dxl_baudnum_read))
+
+
+        # Close port
+        dynamixel.closePort(port_num)
 
     def CleanUp(self):
         pass
@@ -110,6 +411,12 @@ class Limb:
         pass
 
     def MoveHome(self):
+        pass
+
+    def ContinuousMove(self):
+        pass
+
+    def UpdateValues(self):
         pass
 
 class Leg(Limb):
