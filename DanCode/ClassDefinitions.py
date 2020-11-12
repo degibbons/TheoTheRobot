@@ -1,5 +1,5 @@
 import time
-import RelevantFunctions
+from RelevantFunctions import *
 import os
 from ControlTable import *
 from dynamixel_sdk import *
@@ -27,14 +27,8 @@ class Servo:
         else:
             self.Limbnum = 0
         
-        # Initialize PortHandler instance
-        # Set the port path
-        # Get methods and members of PortHandlerLinux or PortHandlerWindows
         self.portHandler = PortHandler(DEVICENAME)
 
-        # Initialize PacketHandler instance
-        # Set the protocol version
-        # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
         self.packetHandler = PacketHandler(PROTOCOL_VERSION)
 
         # Open port
@@ -45,7 +39,6 @@ class Servo:
             print("Press any key to terminate...")
             getch() # pylint: disable=undefined-variable
             quit()
-
 
         # Set port baudrate
         if self.portHandler.setBaudRate(BAUDRATE):
@@ -61,8 +54,6 @@ class Servo:
         self.Speeds = Speeds
 
         self.Activated = 1 # Change this to zero if you don't want it to move
-
-        self.HomePosition = Positions[0]
 
         self.FirstMovePosition = 0
 
@@ -80,7 +71,7 @@ class Servo:
 
         self.PhaseIndex = 0 
 
-        self.StrideIndex = 0
+        self.StrideIndex = 1
 
         self.PhaseTime = 0
 
@@ -177,9 +168,9 @@ class Servo:
         else:
             print("[ID:%03d] Velocity limit set to: %03d" %(self.ID, VELOCITY_LIMIT_H))
 
-    def MoveServo(self,DesPos):
+    def MoveServo(self,IndexIn):
          # Write goal position
-        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PRO_GOAL_POSITION, DesPos)
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PRO_GOAL_POSITION, self.Positions[IndexIn])
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
         elif dxl_error != 0:
@@ -188,7 +179,7 @@ class Servo:
             print("[ID:%03d] Goal Position set to: %03d" %(self.ID, DesPos))
 
     def MoveHome(self):
-        self.MoveServo(self.Positions[0][self.ID])
+        self.MoveServo(0)
 
     def ReadTrait(self,traitNum):
         if os.name == 'nt':
@@ -1020,16 +1011,76 @@ class Servo:
         portHandler.closePort()
 
     def ContinuousMove(self):
-        pass
+        global stopVal
 
-    def StartTimer(self):
-        pass
+        index = 1
+        StartTime = time.perf_counter()
+        firstMove = True
+        while 1:
+            self.MoveServo(index)
+            if (firstMove == True):
+                StrideTimer = time.perf_counter()
+                PhaseTimer = time.perf_counter()
+                firstMove == False
+            index += 1
+            if (stopVal == 1):
+                print("\nFinishing Movement.\n")
+                break
+            if (index > 21):
+                index = 0
+            elif (index == 1):
+                self.StrideIndex += 1
+                StrideTimer = time.perf_counter()
+                PhaseTimer = time.perf_counter()
+            elif (index == 11):
+                PhaseTimer = time.perf_counter()
+            isStopped = 0
+            while 1:
+                dxl_mov, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, ADDR_MOVING)
+                if dxl_comm_result != COMM_SUCCESS:
+                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                elif dxl_error != 0:
+                    print("%s" % packetHandler.getRxPacketError(dxl_error))
+                if dxl_mov == 1:
+                    pass
+                else:
+                    timeMarker = time.perf_counter()
+                    isStopped == 1
+                    break
+                if isStopped == 0:
+                    pass
+                else:
+                    self.UpdateValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    break
 
-    def EndTimer(self):
-        pass
+
+    # FIX THE LOWER THREE FUNCTIONS > ADAPT FOR SINGLE SERVO
 
     def DisplayTraitValues(self):
-        pass
+        print("Relevant Traits Will Print Out When Called...")
+
+    def UpdatePhase(self):
+        for k in self.ServoList:
+            if self.IndexShifts[IndexIn] in list(range(1,11)):
+                k.Phase = 2
+            elif self.IndexShifts[IndexIn] == 11:
+                k.Phase = -1
+            elif self.IndexShifts[IndexIn] in list(range(12,22)):
+                k.Phase = -2
+            elif self.IndexShifts[IndexIn] == 0:
+                k.Phase = 1
+            else:
+                k.Phase = 0
+
+    def UpdateValues(self):
+        RelevReferenceTime = time.perf_counter()
+        if (IndexIn == 0):
+            self.IsHome = True
+        else:
+            self.IsHome = False
+        self.PhaseTime = RelevReferenceTime - StartPhaseRef
+        self.StrideTime = RelevReferenceTime - StartStrideRef
+        self.TotalTime = RelevReferenceTime - StartTimeRef
 
     def RebootServo(self):
         import os
@@ -1225,37 +1276,103 @@ class Servo:
 class Limb:
     def __init__(self,limbnum,servolist):
         self.LimbNumber = limbnum
-        self.ServoList = servolist
+
+        self.ServoList = [servolist]
+
         getNum = lambda a : a.ID
-        self.IDList = map(getNum,self.ServoList)
+        self.IDList = list(map(getNum,self.ServoList))
+
         listLen = len(self.IDList)
         rangeList = list(range(0,listLen))
         self.ServoDict = {}
+
         for i in rangeList:
             self.ServoDict[i] = self.IDList[i] 
 
-        self.StrideCount = 1
-
         self.IsHome = None # Check all Servo Members to set this value
-
-        self.PhaseTime = 0 # Maybe Not Needed? Each Servo also has this trait
-
-        self.StrideTime = 0
 
         self.TotalTime = 0
 
         self.GoalVelocity = []
         self.GoalPosition = []
 
-    def MoveLimb(self,IndexIn,portHandler,packetHandler):
+
+
+
+
+class Leg(Limb):
+    def __init__(self,limbnum,servolist):
+        super().__init__(limbnum,servolist)
+
+        self.Phase = 0 # Check all Servo Members to set this value
+        self.PhaseTime = 0 
+        self.StrideTime = 0
+        self.StrideCount = 1
+        offsets = []
+        for k in self.ServoList:
+            offsets.append(k.OffsetPercent)
+        if len(set(offsets))==1:
+            self.Offset = offsets[0]
+        else:
+            print("The Offsets for the Servos that make up this Leg are not consistent. Please Fix.")
+        self.IndexShifts = RotatePositionArray(list(range(0,22)),self.Offset/10,len(list(range(0,22))))
+
+    def UpdatePhase(self,IndexIn):
+        for k in self.ServoList:
+            if self.IndexShifts[IndexIn] in list(range(1,11)):
+                k.Phase = 2
+            elif self.IndexShifts[IndexIn] == 11:
+                k.Phase = -1
+            elif self.IndexShifts[IndexIn] in list(range(12,22)):
+                k.Phase = -2
+            elif self.IndexShifts[IndexIn] == 0:
+                k.Phase = 1
+            else:
+                k.Phase = 0
+
+    def ReadData(self,IndexIn,portHandler,packetHandler):
+        # Initialize GroupSyncRead instace for Present Position
+        groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+        for h in self.IDList:
+            dxl_addparam_result = groupSyncRead.addParam(h)
+            if dxl_addparam_result != True:
+                print("[ID:%03d] groupSyncRead addparam failed" % h)
+                quit()
+
+        PresentPositions = []
+
+        for e in self.IDList:
+            # Check if groupsyncread data of Dynamixel is available
+            dxl_getdata_result = groupSyncRead.isAvailable(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+            if dxl_getdata_result != True:
+                print("[ID:%03d] groupSyncRead getdata failed" % e)
+                quit()
+
+            # Get Dynamixel present position value
+
+        dxl_present_position = groupSyncRead.getData(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+        PresentPositions.append(dxl_present_position)
+
+        print("======================================================================")
+        GetIndexString = f"Stride #{self.StrideCount}, Movement #{IndexIn}"
+        print(GetIndexString)
+        for f,g in self.ServoDict:
+            GetPosString = "[ID:%03d] GoalPos:%03d  PresPos:%03d" % (g, self.GoalPosition[f], PresentPositions[f])
+            GetVelString = "[ID:%03d] Velocity Given:%03d" % (g, self.GoalVelocity[f])
+            print(GetPosString)
+            print(GetVelString)
+        print("======================================================================")
+        
+        # Clear syncread parameter storage
+        groupSyncRead.clearParam()
+
+    def MoveLimb(self,IndexIn,portHandler,packetHandler,ReadOption=True):
          # Initialize GroupSyncWrite instance
         groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
         # Initialize GroupSyncWrite instance
         groupSyncWriteVEL = GroupSyncWrite(portHandler, packetHandler, ADDR_PROFILE_VELOCITY, LEN_VELOCITY_LIMIT)
-
-        # Initialize GroupSyncRead instace for Present Position
-        groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
         for b in self.ServoList:
             self.GoalVelocity.append(FormatSendData(b.Speeds[IndexIn]))
@@ -1294,63 +1411,39 @@ class Limb:
         # Clear syncwrite parameter storage
         groupSyncWritePOS.clearParam()
 
-        PresentPositions = []
+        if (ReadOption == True):
+            self.ReadData(IndexIn,portHandler,packetHandler)
+        else:
+            pass
 
-        for e in self.ServoList:
-            # Check if groupsyncread data of Dynamixel is available
-            dxl_getdata_result = groupSyncRead.isAvailable(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
-            if dxl_getdata_result != True:
-                print("[ID:%03d] groupSyncRead getdata failed" % e)
-                quit()
-
-            # Get Dynamixel present position value
-            dxl_present_position = groupSyncRead.getData(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
-            PresentPositions.append(dxl_present_position)
-
-        print("======================================================================")
-        GetIndexString = f"Stride #{self.StrideCount}, Movement #{IndexIn}"
-        print(GetIndexString)
-        for f,g in self.ServoDict:
-            GetPosString = "[ID:%03d] GoalPos:%03d  PresPos:%03d" % (g, self.GoalPosition[f], PresentPositions[f])
-            GetVelString = "[ID:%03d] Velocity Given:%03d" % (g, self.GoalVelocity[f])
-            print(GetPosString)
-            print(GetVelString)
-        print("======================================================================")
-        
-        # Clear syncread parameter storage
-        groupSyncRead.clearParam()
-
-    def MoveHome(self,portHandler,packetHandler):
-        self.MoveLimb(0,portHandler,packetHandler)
+    def MoveHome(self,portHandler,packetHandler,ReadOption=False):
+        self.MoveLimb(0,portHandler,packetHandler,ReadOption)
         self.IsHome = True
         print(f"Limb #{self.LimbNumber} Moved To Home Position\n")
 
-    def ReadData(self,GroupSyncRead):
-        pass
-
     def ContinuousMove(self,portHandler,packetHandler):
         global stopVal
-        # Initialize GroupSyncRead instace for Moving Status
-        groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_MOVING, LEN_MOVING)
-
-        for h in self.ServoList:
-            dxl_addparam_result = groupSyncRead.addParam(h)
-            if dxl_addparam_result != True:
-                print("[ID:%03d] groupSyncRead addparam failed" % h)
-                quit()
-        
         index = 1
         StartTime = time.perf_counter()
+        firstMove = True
         while 1:
-            self.MoveLimb(index,portHandler,packetHandler)
+            self.MoveLimb(index,portHandler,packetHandler,ReadOption=True)
+            if (firstMove == True):
+                StrideTimer = time.perf_counter()
+                PhaseTimer = time.perf_counter()
+                firstMove == False
             index += 1
             if (stopVal == 1):
-                print("Finishing Movement.")
+                print("\nFinishing Movement.\n")
                 break
             if (index > 21):
                 index = 0
             elif (index == 1):
                 self.StrideCount += 1
+                StrideTimer = time.perf_counter()
+                PhaseTimer = time.perf_counter()
+            elif (index == 11):
+                PhaseTimer = time.perf_counter()
             isStopped = [0] * len(self.ServoList)
             timeMarkers = [0] * len(self.ServoList)
             while 1:
@@ -1365,22 +1458,23 @@ class Limb:
                     if (dxl_mov == 0) and (isStopped[i] == 0):
                         timeMarkers[i] = time.perf_counter()
                         isStopped[i] = 1
-                
+
                 if 0 in isStopped:
                     pass
                 else:
+                    self.UpdateValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    # PRINT INFORMATION TO DOCUMENT HERE USING TIMEMARKERS LIST
                     break
 
-    def UpdateValues(self):
-        pass
-
-
-
-class Leg(Limb):
-    def __init__(self,limbnum,servolist):
-        super().__init__(limbnum,servolist)
-
-        self.Phase = 0 # Check all Servo Members to set this value
+    def UpdateValues(self,IndexIn,StartTimeRef,StartStrideRef,StartPhaseRef):
+        RelevReferenceTime = time.perf_counter()
+        if (IndexIn == 0):
+            self.IsHome = True
+        else:
+            self.IsHome = False
+        self.PhaseTime = RelevReferenceTime - StartPhaseRef
+        self.StrideTime = RelevReferenceTime - StartStrideRef
+        self.TotalTime = RelevReferenceTime - StartTimeRef
 
 
 class Neck(Limb):
@@ -1427,3 +1521,5 @@ class DataDocument:
     def __del__(self):
         pass   
 
+def FormatSendData(rawData):
+    return [DXL_LOBYTE(DXL_LOWORD(rawData)), DXL_HIBYTE(DXL_LOWORD(rawData)), DXL_LOBYTE(DXL_HIWORD(rawData)), DXL_HIBYTE(DXL_HIWORD(rawData))]
