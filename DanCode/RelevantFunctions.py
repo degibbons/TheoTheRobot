@@ -942,8 +942,9 @@ def PostProcessSpeeds(speeds):
 
     FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
     HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
-
-    return FL_VEL, HL_VEL 
+    TOT_VEL = np.concatenate(FL_VEL,HL_VEL),axis=1)
+    
+    return TOT_VEL
 
 def PostProcessPositions():
     ServoPos1 = RotatePositionArray(FL_TOT_R_1,1,len(FL_TOT_R_1))

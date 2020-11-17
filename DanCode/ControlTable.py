@@ -90,8 +90,6 @@ LEN_PRO_PRESENT_POSITION    = 4
 LEN_VELOCITY_LIMIT          = 4
 LEN_MOVING                  = 1
 
-FileExist = 0       #Indicates if the file data is written to exists or not
-
 index = 0
 dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]         # Goal position
 
@@ -219,6 +217,4 @@ AddrDict = {                          #Byte Size
     48: 146 # Present Temperature       1  
 }
 
-
 rows, cols = (22, 16) 
-MoveHomeSpeedMatrix = [[STRAIGHT_SPEED for i in range(cols)] for j in range(rows)]

@@ -9,25 +9,25 @@ import dynamixel_functions as dynamixel
 stopVal = 0
 
 class Servo:
-    def __init__(self,IDnum,Speeds,Positions):
+    def __init__(self,IDnum,Positions):
         self.ID = IDnum
 
-        if (IDnum == 1 or IDnum == 2 or IDnum == 3 or IDnum == 4):
-            self.Limbnum = 1
-        elif (IDnum == 5 or IDnum == 6 or IDnum == 7 or IDnum == 8):
-            self.Limbnum = 2
-        elif (IDnum == 9 or IDnum == 10 or IDnum == 11 or IDnum == 12):
-            self.Limbnum = 3
-        elif (IDnum == 13 or IDnum == 14 or IDnum == 15 or IDnum == 16):
-            self.Limbnum = 4
-        elif (IDnum == 17 or IDnum == 18):
-            self.Limbnum = 5
-        elif (IDnum == 19 or IDnum == 20 or IDnum == 21 or IDnum == 22):
-            self.Limbnum = 6
-        elif (IDnum == 23 or IDnum == 24):
-            self.Limbnum = 7
-        else:
-            self.Limbnum = 0
+        # if (IDnum == 1 or IDnum == 2 or IDnum == 3 or IDnum == 4):
+        #     self.Limbnum = 1
+        # elif (IDnum == 5 or IDnum == 6 or IDnum == 7 or IDnum == 8):
+        #     self.Limbnum = 2
+        # elif (IDnum == 9 or IDnum == 10 or IDnum == 11 or IDnum == 12):
+        #     self.Limbnum = 3
+        # elif (IDnum == 13 or IDnum == 14 or IDnum == 15 or IDnum == 16):
+        #     self.Limbnum = 4
+        # elif (IDnum == 17 or IDnum == 18):
+        #     self.Limbnum = 5
+        # elif (IDnum == 19 or IDnum == 20 or IDnum == 21 or IDnum == 22):
+        #     self.Limbnum = 6
+        # elif (IDnum == 23 or IDnum == 24):
+        #     self.Limbnum = 7
+        # else:
+        #     self.Limbnum = 0
         
         self.portHandler = PortHandler(DEVICENAME)
 
@@ -52,7 +52,8 @@ class Servo:
             quit()
 
         self.Positions = Positions
-        self.Speeds = Speeds
+        self.Speeds = []
+        self.HomeSpeed = STRAIGHT_SPEED
         self.Activated = 1 # Change this to zero if you don't want it to move
         self.FirstMovePosition = 0
         self.OffsetPercent = 0
@@ -167,6 +168,7 @@ class Servo:
             print("[ID:%03d] Goal Position set to: %03d" %(self.ID, InPosition))
 
     def MoveHome(self):
+        self.SetServoVelocity(self.HomeSpeed)
         self.MoveServo(self.Positions[0])
 
     def ReadTrait(self,traitNum):
