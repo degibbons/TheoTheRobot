@@ -102,16 +102,23 @@ while 1:
     PrintUserMenu()
     print("\n")
     desired_action_1 = int(input("Enter selection number here: "))
-
-    if (desired_action_1 == 1):
+    print("\n\n")
+    if (desired_action_1 == 1): # Move 1 Servo
+        desired_servo = int(input("Please enter the desired servo # you wish to move: "))
+        ServoObjDict[desired_servo].InitialSetup
+        ServoObjDict[desired_servo].ToggleTorque(1,portHandler,packetHandler)
+        desired_origin = input("Would you like this servo to move to it's natural Home Position?[Y/n]: ")
+        if (desired_origin.lower()=='y'):
+            pass
+        else:
+            pass
+    elif(desired_action_1 == 2): # Move 1 Limb
+        pass    
+    elif(desired_action_1 == 3): # Move entire robot
         pass
-    elif(desired_action_1 == 2):
+    elif(desired_action_1 == 4): # Perform a specific non-movement action
         pass
-    elif(desired_action_1 == 3):
-        pass
-    elif(desired_action_1 == 4):
-        pass
-    elif(desired_action_1 == 5):
+    elif(desired_action_1 == 5): # Shut down robot and close documents
         pass
 
 

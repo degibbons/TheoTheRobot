@@ -513,34 +513,34 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, StrideIndex, 
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
 
-        if limbNum == 1:
-            StartIndex = 
-            EndIndex = 
-            HomeIndex = 
-            FirstMoveIndex = 
-            St2SwIndex = 
-            Sw2StIndex = 
-        elif limbNum == 2:
-            StartIndex = 
-            EndIndex = 
-            HomeIndex = 
-            FirstMoveIndex = 
-            St2SwIndex = 
-            Sw2StIndex = 
-        elif limbNumb == 3:
-            StartIndex = 
-            EndIndex = 
-            HomeIndex = 
-            FirstMoveIndex = 
-            St2SwIndex = 
-            Sw2StIndex = 
-        elif limbNumb == 4:
-            StartIndex = 
-            EndIndex = 
-            HomeIndex = 
-            FirstMoveIndex = 
-            St2SwIndex = 
-            Sw2StIndex = 
+        # if limbNum == 1:
+        #     StartIndex =  
+        #     EndIndex = 
+        #     HomeIndex = 
+        #     FirstMoveIndex = 
+        #     St2SwIndex = 
+        #     Sw2StIndex = 
+        # elif limbNum == 2:
+        #     StartIndex = 
+        #     EndIndex = 
+        #     HomeIndex = 
+        #     FirstMoveIndex = 
+        #     St2SwIndex = 
+        #     Sw2StIndex = 
+        # elif limbNumb == 3:
+        #     StartIndex = 
+        #     EndIndex = 
+        #     HomeIndex = 
+        #     FirstMoveIndex = 
+        #     St2SwIndex = 
+        #     Sw2StIndex = 
+        # elif limbNumb == 4:
+        #     StartIndex = 
+        #     EndIndex = 
+        #     HomeIndex = 
+        #     FirstMoveIndex = 
+        #     St2SwIndex = 
+        #    Sw2StIndex = 
             
 
         if indexIn == 0:
@@ -586,9 +586,9 @@ def MoveSingleLimb(DesiredLimb,PositionMatrix,SpeedMatrix,indexIn, StrideIndex, 
         TimeMarker4 = time.perf_counter()
         TimeMarkerSlowest = time.perf_counter
         
-        PhaseTime = BeginTime - 
-        StrideTime = BeginTime - 
-        TotTime = BeginTime - 
+        # PhaseTime = BeginTime - 
+        # StrideTime = BeginTime - 
+        # TotTime = BeginTime - 
 
 
         # Limb Number, Servo Number, Goal Position, Present Position, Speed Given to get to Goal Position, 
@@ -687,7 +687,7 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHand
 
             # Get Dynamixel#1 present Moving value
             dxl1_mov = groupSyncRead.getData(limb[0], ADDR_MOVING, LEN_MOVING)
-            if (dxl1_mov == 0) and (key1 = 0):
+            if (dxl1_mov == 0) and (key1 == 0):
                 TimeMarker1 = time.perf_counter()
                 key1 = 1
 
@@ -696,21 +696,21 @@ def LimbLoop(DesiredLimb,PositionMatrix,SpeedMatrix,index,portHandler,packetHand
 
             # Get Dynamixel#2 Moving value
             dxl2_mov = groupSyncRead.getData(limb[1], ADDR_MOVING, LEN_MOVING)
-            if (dxl2_mov == 0) and (key2 = 0):
+            if (dxl2_mov == 0) and (key2 == 0):
                 TimeMarker2 = time.perf_counter()
                 key2 = 1
  #            time.sleep(PreferedDelay)
 
             # Get Dynamixel#3 Moving value
             dxl3_mov = groupSyncRead.getData(limb[2], ADDR_MOVING, LEN_MOVING)
-            if (dxl3_mov == 0) and (key3 = 0):
+            if (dxl3_mov == 0) and (key3 == 0):
                 TimeMarker3 = time.perf_counter()
                 key3 = 1
  #            time.sleep(PreferedDelay)
 
             # Get Dynamixel#4 Moving value
             dxl4_mov = groupSyncRead.getData(limb[3], ADDR_MOVING, LEN_MOVING)
-            if (dxl4_mov == 0) and (key4 = 0):
+            if (dxl4_mov == 0) and (key4 == 0):
                 TimeMarker4 = time.perf_counter()
                 key4 = 1
 
@@ -1013,7 +1013,6 @@ def PostProcessPositions():
     return FL_TOT, HL_TOT
 
 def PrintUserMenu():
-    print("\nWhat would you like to do?\n")
     print("---------MENU---------")
     print("1: Move a single servo")
     print("2: Move a specific limb")
@@ -2159,7 +2158,9 @@ def PingServos():
         print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list.get(dxl_id)[0], dxl_data_list.get(dxl_id)[1]))
 
     # Close port
-    portHandler.closePort()
+    portHandler.closePort() 
+
+    return dxl_data_list
     
 def CleanUp(number_of_servos_connected,portHandler,packetHandler):
     TurnOffOnTorque(TORQUE_OFF,1,1,number_of_servos_connected,portHandler,packetHandler)
