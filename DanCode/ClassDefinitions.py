@@ -3,6 +3,8 @@ from RelevantFunctions import *
 import os
 from ControlTable import *
 from dynamixel_sdk import *
+from time import sleep
+import dynamixel_functions as dynamixel  
 
 stopVal = 0
 
@@ -50,35 +52,21 @@ class Servo:
             quit()
 
         self.Positions = Positions
-
         self.Speeds = Speeds
-
         self.Activated = 1 # Change this to zero if you don't want it to move
-
         self.FirstMovePosition = 0
-
         self.OffsetPercent = 0
-
         self.Phase = 0 # 2 for Stance, 1 for transition to stance, -2 for swing, -1 for transition to swing, 0 for other
-
         self.PresentPosition = 0
-
         self.GivenPosition = 0
-
         self.GivenSpeed = 0
-
         self.MovementTime = 0 # Length of time for the last movement given
-
         self.PhaseIndex = 0 
-
         self.StrideIndex = 1
-
         self.PhaseTime = 0
-
         self.StrideTime = 0
-
         self.TotalTime = 0
-
+        self.IndexShifts = RotatePositionArray(list(range(0,22)),self.OffsetPercent/10,len(list(range(0,22))))
 
     def InitialSetup(self): # Use SetServoTraits to fill this
         #Set drive mode to velocity based
@@ -147,7 +135,7 @@ class Servo:
 
         time.sleep(PreferedDelay)
 
-    def ToggleTorque(self,OnOrOff):
+    def ToggleTorque(self,OnOrOff,portHandler,packetHandler):
         dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(portHandler, self.ID, ADDR_PRO_TORQUE_ENABLE, OnOrOff)
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
@@ -159,27 +147,27 @@ class Servo:
             elif (OnOrOff == 0):
                 print("Dynamixel#%d torque off" % self.ID)
 
-    def SetServoVelocity(self):
-        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PROFILE_VELOCITY, VELOCITY_LIMIT_H)
+    def SetServoVelocity(self,InVelocity):
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PROFILE_VELOCITY,InVelocity)
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
         elif dxl_error != 0:
             print("%s" % self.packetHandler.getRxPacketError(dxl_error))
         else:
-            print("[ID:%03d] Velocity limit set to: %03d" %(self.ID, VELOCITY_LIMIT_H))
+            print("[ID:%03d] Velocity limit set to: %03d" %(self.ID, InVelocity))
 
-    def MoveServo(self,IndexIn):
+    def MoveServo(self,InPosition):
          # Write goal position
-        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PRO_GOAL_POSITION, self.Positions[IndexIn])
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PRO_GOAL_POSITION, InPosition)
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
         elif dxl_error != 0:
             print("%s" % self.packetHandler.getRxPacketError(dxl_error))
         else:
-            print("[ID:%03d] Goal Position set to: %03d" %(self.ID, DesPos))
+            print("[ID:%03d] Goal Position set to: %03d" %(self.ID, InPosition))
 
     def MoveHome(self):
-        self.MoveServo(0)
+        self.MoveServo(self.Positions[0])
 
     def ReadTrait(self,traitNum):
         if os.name == 'nt':
@@ -227,339 +215,339 @@ class Servo:
             getch()
             quit()
 
-        DataAddr = DataAddrConversion(DesiredData)
+        DataAddr = DataAddrConversion(traitNum)
 
         if (traitNum == 1):
-            ModelNumber, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            ModelNumber, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Model Number: %03d" % (self.ID, ModelNumber))
         elif (traitNum == 2):
-            ModelInfo, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            ModelInfo, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Model Information: %03d" % (self.ID, ModelInfo))
         elif (traitNum == 3):
-            FirmwareVer, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            FirmwareVer, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Firmware Version: %03d" % (self.ID, FirmwareVer))
         elif (traitNum == 4):
-            IDnum, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            IDnum, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] ID Number: %03d" % (self.ID, IDnum))
         elif (traitNum == 5):
-            BaudRate, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            BaudRate, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Baud Rate: %03d" % (self.ID, BaudRate))
         elif (traitNum == 6):
-            RetDelayTime, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            RetDelayTime, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Return Delay Time: %03d" % (self.ID, RetDelayTime))
         elif (traitNum == 7):
-            DriveMode, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            DriveMode, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Drive Mode: %03d" % (self.ID, DriveMode))
         elif (traitNum == 8):
-            OperateMode, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            OperateMode, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Operating Mode: %03d" % (self.ID, OperateMode))
         elif (traitNum == 9):
-            ProtocType, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            ProtocType, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Protocol Type: %03d" % (self.ID, ProtocType))
         elif (traitNum == 10):
-            HomeOffset, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            HomeOffset, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Homing Offset: %03d" % (self.ID, HomeOffset))
         elif (traitNum == 11):
-            MoveThreshold, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MoveThreshold, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Moving Threshold: %03d" % (self.ID, MoveThreshold))
         elif (traitNum == 12):
-            TempLimit, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            TempLimit, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Temperature Limit: %03d" % (self.ID, TempLimit))
         elif (traitNum == 13):
-            MaxVoltLimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MaxVoltLimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Max Voltage Limit: %03d" % (self.ID, MaxVoltLimit))
         elif (traitNum == 14):
-            MinVoltLimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MinVoltLimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Min Voltage Limit: %03d" % (self.ID, MinVoltLimit))
         elif (traitNum == 15):
-            PWMlimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PWMlimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] PWM Limit: %03d" % (self.ID, PWMlimit))
         elif (traitNum == 16):
-            CurrLimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            CurrLimit, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Current Limit: %03d" % (self.ID, CurrLimit))
         elif (traitNum == 17):
-            AccLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            AccLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Acceleration Limit: %03d" % (self.ID, AccLimit))
         elif (traitNum == 18):
-            VelLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            VelLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Velocity Limit: %03d" % (self.ID, VelLimit))
         elif (traitNum == 19):
-            MaxPosLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MaxPosLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Max Position Limit: %03d" % (self.ID, MaxPosLimit))
         elif (traitNum == 20):
-            MinPosLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MinPosLimit, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Min Position Limit: %03d" % (self.ID, MinPosLimit))
         elif (traitNum == 21):
-            ShutdownVal, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            ShutdownVal, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Shutdown Value: %03d" % (self.ID, ShutdownVal))
         elif (traitNum == 22):
-            TorqToggle, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            TorqToggle, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Torque Toggle Value: %03d" % (self.ID, TorqToggle))
         elif (traitNum == 23):
-            LEDtoggle, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            LEDtoggle, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] LED Toggle Value: %03d" % (self.ID, LEDtoggle))
         elif (traitNum == 24):
-            StatusRetLevel, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            StatusRetLevel, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Status Return Level: %03d" % (self.ID, StatusRetLevel))
         elif (traitNum == 25):
-            RegInstruction, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            RegInstruction, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Registered Instruction: %03d" % (self.ID, RegInstruction))
         elif (traitNum == 26):
-            HardErrStat, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            HardErrStat, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Hardware Error Status: %03d" % (self.ID, HardErrStat))
         elif (traitNum == 27):
-            VelIgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            VelIgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Velocity I Gain: %03d" % (self.ID, VelIgain))
         elif (traitNum == 28):
-            VelPgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            VelPgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Velocity P Gain: %03d" % (self.ID, VelPgain))
         elif (traitNum == 29):
-            PosDgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PosDgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Position D Gain: %03d" % (self.ID, PosDgain))
         elif (traitNum == 30):
-            PosIgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PosIgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Position I Gain: %03d" % (self.ID, PosIgain))
         elif (traitNum == 31):
-            PosPgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PosPgain, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Position P Gain: %03d" % (self.ID, PosPgain))
         elif (traitNum == 32):
-            GoalPWM, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            GoalPWM, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Goal PWM: %03d" % (self.ID, GoalPWM))
         elif (traitNum == 33):
-            GoalCurr, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            GoalCurr, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Goal Current: %03d" % (self.ID, GoalCurr))
         elif (traitNum == 34):
-            GoalVel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            GoalVel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Goal Velocity: %03d" % (self.ID, GoalVel))
         elif (traitNum == 35):
-            ProfAccel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            ProfAccel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Profile Acceleration: %03d" % (self.ID, ProfAccel))
         elif (traitNum == 36):
-            ProfVel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            ProfVel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Profile Velocity: %03d" % (self.ID, ProfVel))
         elif (traitNum == 37):
-            GoalPos, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            GoalPos, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Goal Position: %03d" % (self.ID, GoalPos))
         elif (traitNum == 38):
-            RealtimeTick, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            RealtimeTick, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Realtime Tick: %03d" % (self.ID, RealtimeTick))
         elif (traitNum == 39):
-            MovingVal, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MovingVal, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Moving Value: %03d" % (self.ID, MovingVal))
         elif (traitNum == 40):
-            MovingStat, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            MovingStat, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Moving Status: %03d" % (self.ID, MovingStat))
         elif (traitNum == 41):
-            PresentPWM, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PresentPWM, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Present PWM: %03d" % (self.ID, PresentPWM))
         elif (traitNum == 42):
-            PresentCurr, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PresentCurr, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
-            print("[ID:%03d] Present Current: %03d" % (self.ID, PresentPWM))
+            print("[ID:%03d] Present Current: %03d" % (self.ID, PresentCurr))
         elif (traitNum == 43):
-            PresentVel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PresentVel, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Present Velocity: %03d" % (self.ID, PresentVel))
         elif (traitNum == 44):
-            PresentPos, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PresentPos, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Present Position: %03d" % (self.ID, PresentPos))
         elif (traitNum == 45):
-            VelTraj, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            VelTraj, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Velocity Trajectory: %03d" % (self.ID, VelTraj))
         elif (traitNum == 46):
-            PosTraj, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PosTraj, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Position Trajectory: %03d" % (self.ID, PosTraj))
         elif (traitNum == 47):
-            PresInVoltage, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PresInVoltage, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % packetHandler.getRxPacketError(dxl_error))
             print("[ID:%03d] Present Input Voltage: %03d" % (self.ID, PresInVoltage))
         elif (traitNum == 48):
-            PresTemp, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, DesiredServo, DataAddr)
+            PresTemp, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, DataAddr)
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
@@ -1010,14 +998,16 @@ class Servo:
         # Close port
         portHandler.closePort()
 
-    def ContinuousMove(self):
+    def ContinuousMove(self,portHandler,packetHandler):
         global stopVal
 
         index = 1
         StartTime = time.perf_counter()
         firstMove = True
         while 1:
-            self.MoveServo(index)
+            self.SetServoVelocity(self.Speeds[index])
+            self.MoveServo(self.Positions[index])
+            self.UpdateOtherValues(self.Positions[index],self.Speeds[index])
             if (firstMove == True):
                 StrideTimer = time.perf_counter()
                 PhaseTimer = time.perf_counter()
@@ -1050,29 +1040,25 @@ class Servo:
                 if isStopped == 0:
                     pass
                 else:
-                    self.UpdateValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    self.UpdateTimeValues(index-1,StartTime,StrideTimer,PhaseTimer)
                     break
-
-
-    # FIX THE LOWER THREE FUNCTIONS > ADAPT FOR SINGLE SERVO
 
     def DisplayTraitValues(self):
         print("Relevant Traits Will Print Out When Called...")
 
-    def UpdatePhase(self):
-        for k in self.ServoList:
-            if self.IndexShifts[IndexIn] in list(range(1,11)):
-                k.Phase = 2
-            elif self.IndexShifts[IndexIn] == 11:
-                k.Phase = -1
-            elif self.IndexShifts[IndexIn] in list(range(12,22)):
-                k.Phase = -2
-            elif self.IndexShifts[IndexIn] == 0:
-                k.Phase = 1
-            else:
-                k.Phase = 0
+    def UpdatePhase(self,IndexIn):
+        if self.IndexShifts[IndexIn] in list(range(1,11)):
+            self.Phase = 2
+        elif self.IndexShifts[IndexIn] == 11:
+            self.Phase = -1
+        elif self.IndexShifts[IndexIn] in list(range(12,22)):
+            self.Phase = -2
+        elif self.IndexShifts[IndexIn] == 0:
+            self.Phase = 1
+        else:
+            self.Phase = 0
 
-    def UpdateValues(self):
+    def UpdateTimeValues(self,IndexIn,StartTimeRef,StartStrideRef,StartPhaseRef):
         RelevReferenceTime = time.perf_counter()
         if (IndexIn == 0):
             self.IsHome = True
@@ -1081,6 +1067,10 @@ class Servo:
         self.PhaseTime = RelevReferenceTime - StartPhaseRef
         self.StrideTime = RelevReferenceTime - StartStrideRef
         self.TotalTime = RelevReferenceTime - StartTimeRef
+
+    def UpdateOtherValues(self,GivPos,GivVel):
+        self.GivenPosition = GivPos
+        self.GivenSpeed = GivVel
 
     def RebootServo(self):
         import os
@@ -1161,8 +1151,7 @@ class Servo:
 
         os.sys.path.append('../dynamixel_functions_py')             # Path setting
 
-        from time import sleep
-        import dynamixel_functions as dynamixel                     # Uses DYNAMIXEL SDK library
+                           # Uses DYNAMIXEL SDK library
 
         # Initialize PortHandler Structs
         # Set the port path
@@ -1390,11 +1379,6 @@ class Leg(Limb):
                 print("[ID:%03d] groupSyncWrite addparam failed" % d)
                 quit()
 
-            dxl_addparam_result = groupSyncRead.addParam(d)
-            if dxl_addparam_result != True:
-                print("[ID:%03d] groupSyncRead addparam failed" % d)
-                quit()
-
         # Syncwrite goal velocity
         dxl_comm_result = groupSyncWriteVEL.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
@@ -1423,6 +1407,9 @@ class Leg(Limb):
 
     def ContinuousMove(self,portHandler,packetHandler):
         global stopVal
+        # Initialize GroupSyncRead instace for Present Position
+        groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
         index = 1
         StartTime = time.perf_counter()
         firstMove = True
@@ -1462,11 +1449,11 @@ class Leg(Limb):
                 if 0 in isStopped:
                     pass
                 else:
-                    self.UpdateValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    self.UpdateTimeValues(index-1,StartTime,StrideTimer,PhaseTimer)
                     # PRINT INFORMATION TO DOCUMENT HERE USING TIMEMARKERS LIST
                     break
 
-    def UpdateValues(self,IndexIn,StartTimeRef,StartStrideRef,StartPhaseRef):
+    def UpdateTimeValues(self,IndexIn,StartTimeRef,StartStrideRef,StartPhaseRef):
         RelevReferenceTime = time.perf_counter()
         if (IndexIn == 0):
             self.IsHome = True
@@ -1489,37 +1476,50 @@ class Tail(Limb):
 
 
 class Body:
-    def __init__(self,name):
-        self.Name = name
+    def __init__(self,limbs):
+        self.limbs = [limbs]
 
-    def MoveBody(self):
-        pass
+    def MoveBody(self,IndexIn,portHandler,packetHandler):
+        for SingleLimb in self.limbs:
+            SingleLimb.MoveLimb(IndexIn,portHandler,PacketHandler,ReadOption=True)
 
-    def MoveHome(self):
-        pass
+    def MoveHome(self,portHandler,packetHandler):
+        for SingleLimb in self.limbs:
+            SingleLimb.MoveHome(portHandler,PacketHandler,ReadOption=False)
+
+    def ContinuousMove(self,portHandler,packetHandler):
+        pass # Going to need threads for these???
 
 
 class DataDocument:
-    def __init__(self,directory,name,extension):
+    def __init__(self,directory):
         self.Directory = directory
-        self.Name = name
-        self.FileExtension = extension
+        self.Name = None
+        self.FileExtension = ".txt"
         self.FileExists = 0
+        self.FilePermission = 'w+'
+        self.FileRef = None
 
     def CreateDoc(self):
-        pass
+        print("Your data file will be saved in the Records sub-folder.\n")
+        tempName = input("Enter the name of the File you want to create: ")
+        print("\n")
+        self.Name = tempName + self.FileExtension
+        self.FileRef = open(self.Name,self.FilePermission)
 
     def CheckForDoc(self):
-        pass
+        if self.FileExists == 0:
+            return False
+        else:
+            return True
 
-    def WriteToDoc(self):
-        pass
+    def WriteToDoc(self,InData):
+        self.FilePermission = 'a+' # Need to close and open with different permission?
+        self.FileRef.write(IndData)
 
     def CloseDoc(self):
-        pass
+        self.FilePermission = 'a+'
+        self.FileRef.close()
 
     def __del__(self):
         pass   
-
-def FormatSendData(rawData):
-    return [DXL_LOBYTE(DXL_LOWORD(rawData)), DXL_HIBYTE(DXL_LOWORD(rawData)), DXL_LOBYTE(DXL_HIWORD(rawData)), DXL_HIBYTE(DXL_HIWORD(rawData))]
