@@ -14,11 +14,30 @@ from RelevantFunctions import *
 from dynamixel_sdk import *
 from threading import Thread
 
+if os.name == 'nt':
+    import msvcrt
+    def getch():
+        return msvcrt.getch().decode()
+else:
+    import sys, tty, termios
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    def getch():
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
 
 [portHandler, packetHandler] = InitialSetup()              # Uses Dynamixel SDK library
 
 [FrontPositions, BackPositions] = PostProcessPositions()
 PositionsArray = np.concatenate((FrontPositions,BackPositions),axis=1)
+
+# Break detection and assembly into its own function(s)
+
+# Also make function for determining speeds from given float input
 
 ServoObjList = []
 ServoObjDict = {}
@@ -106,6 +125,9 @@ for ServoID,ServoObj in ServoObjDict:
         TheoBodyDict[7] = TailStructure
         print("Tail Limb is Digitally Assembled.")
 
+#TheoWholeBody = Body()
+# NEED LIST OF LIMBS TO INITIATE BODY STRUCTURE
+
 while 1:
     PrintUserMenu()
     print("\n")
@@ -149,25 +171,41 @@ while 1:
         desired_servo_limb = int(input("Enter selection number here: "))
         print("\n")
         desired_movement = input("Would you like the limb to move One Time or Continuously?[o/c]: ")
+        desired_timespan = float(input("How long (in seconds) do you want a single stride to take?: "))
+        speeds = DetermineSpeeds(desired_timespan,PositionsFile)
+        TotMatrix_speeds = PostProcessSpeeds(speeds)
+        TheoBodyDict[desired_servo_limb].MoveHome(portHandler,packetHandler,ReadOption=False)
+        for each_servo in TheoBodyDict[desired_servo_limb].ServoList:
+            each_servo.Speeds = TotMatrix_speeds[:][each_servo.ID]
         if (desired_movement.lower() == 'o'):
             desired_position = int(input("To what location index do you want the limb to move?: "))
             print("\n")
-            desired_timespan = float(input("What speed do you want the limb to move at?: "))
-            print("\n")
-        # NEEDS TO BE FILLED IN HERE
+            print("Press Enter to start when ready.")
+            print("When done, hit Escape.\n")
+            while 1:
+                if getch() == chr(0x0D):
+                    break
+            TheoBodyDict[desired_servo_limb].MoveLimb(desired_position,portHandler,packetHandler,ReadOption=False)
         elif (desired_movement.lower() == 'c'):
-            desired_timespan = float(input("How long (in seconds) do you want a single stride to take?: "))
-            speeds = DetermineSpeeds(desired_timespan,PositionsFile)
-            TotMatrix_speeds = PostProcessSpeeds(speeds)
-        # NEEDS TO BE FILLED IN HERE USING STUFF BELOW
-        speeds = DetermineSpeeds(desired_timespan,PositionsFile)
-        TotMatrix_speeds = PostProcessSpeeds(speeds)
-        for each_servo in TheoBodyDict[desired_servo_limb].ServoList:
-            each_servo.Speeds = TotMatrix_speeds[:][each_servo.ID]
-        TheoBodyDict[desired_servo_limb].
+            print("Press Enter to start when ready.")
+            print("When done, hit Escape.\n")
+            while 1:
+                if getch() == chr(0x0D):
+                    break
+            TheoBodyDict[desired_servo_limb].ContinuousMove(portHandler,packetHandler)
         
     elif(desired_action_1 == 3): # Move entire robot
-        pass
+        print("All available Servos will run their given movement instructions.")
+        desired_timespan = float(input("How long (in seconds) do you want a single stride to take?: ")
+        speeds = DetermineSpeeds(desired_timespan,PositionsFile)
+        TotMatrix_speeds = PostProcessSpeeds(speeds)
+        TheoBody.MoveHome(portHandler,packetHandler)
+        print("Press Enter to start when ready.")
+        print("When done, hit Escape.\n")
+        while 1:
+            if getch() == chr(0x0D):
+                break
+        TheoBo
     elif(desired_action_1 == 4): # Perform a specific non-movement action
         pass
     elif(desired_action_1 == 5): # Shut down robot, delete object structures, and close documents
