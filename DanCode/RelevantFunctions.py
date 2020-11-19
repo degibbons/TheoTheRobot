@@ -1021,6 +1021,22 @@ def PrintUserMenu():
     print("4: Other")
     print("5: Exit\n")
 
+def PrintOptionsSubmenu():
+    print("\n---------SUBMENU---------")
+    print("1: Turn Torque setting off for all servos")
+    print("2: Turn Torque setting on for all servos")
+    print("3: Turn Torque setting off for specific servo")
+    print("4: Turn Torque setting on for specific servo")
+    print("5: Get Servo trait")
+    print("6: Send Servo trait")
+    print("7: Ping all connected servos")
+    print("8: Reboot all servos")
+    print("9: Reset all servos")
+    print("10: Reboot specified servo(s)")
+    print("11: Reset specified servo(s)")
+    print("12: Test ping outer apparatuses\n")
+
+
 def DisplayServoTraits():
     print("Servo Traits:\n")
     print("1: Model Number")
@@ -2168,3 +2184,10 @@ def CleanUp(number_of_servos_connected,portHandler,packetHandler):
     print("Shutting down system.\n")
     print("Thank you for using Theo!")
     
+    # Turn off torque for all servos connected
+    # Close any files previously opened
+    # Delete all objects
+    # Follow up with Shutdown Function?
+
+def ShutDown()
+    pass
