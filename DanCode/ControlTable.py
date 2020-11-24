@@ -218,3 +218,5 @@ AddrDict = {                          #Byte Size
 }
 
 rows, cols = (22, 16) 
+
+PinPulseTime = 2 # Amount of time a pin will be pulsed in seconds

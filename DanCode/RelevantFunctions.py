@@ -9,6 +9,8 @@ import numpy as np
 import copy as cp
 import time
 from curtsies import Input
+from threading import Thread
+import RPi.GPIO as GPIO
 
 stopVal = 0
 
@@ -942,7 +944,7 @@ def PostProcessSpeeds(speeds):
 
     FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
     HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
-    TOT_VEL = np.concatenate(FL_VEL,HL_VEL),axis=1)
+    TOT_VEL = np.concatenate(FL_VEL,HL_VEL,axis=1)
     
     return TOT_VEL
 
@@ -2179,15 +2181,132 @@ def PingServos():
 
     return dxl_data_list
     
-def CleanUp(number_of_servos_connected,portHandler,packetHandler):
-    TurnOffOnTorque(TORQUE_OFF,1,1,number_of_servos_connected,portHandler,packetHandler)
-    print("Shutting down system.\n")
-    print("Thank you for using Theo!")
-    
-    # Turn off torque for all servos connected
-    # Close any files previously opened
-    # Delete all objects
-    # Follow up with Shutdown Function?
+def CleanUp(BodyObj,LimbObjList,ServoObjList,CurrentDoc):
+    for each_servo in ServoObjList:
+        each_servo.ToggleTorque(0,each_servo.portHandler,each_servo.packetHandler)
+    BodyObj.__del__()
+    for each_limb in LimbObjList:
+        each_limb.__del__()
+    for each_servo in ServoObjList:
+        each_servo.__del__()
+    if CurrentDoc != None:
+        CurrentDoc.CloseDoc()
+        CurrentDoc.__del__()
 
-def ShutDown()
-    pass
+def ShutDown():
+    print("Shutting down system.\n")
+    # Turn off power to external boards and other systems
+    print("Thank you for using Theo!")
+
+def SpeedMerge():
+    desired_timespan = float(input("How long (in seconds) do you want a single stride to take?: "))
+    speeds = DetermineSpeeds(desired_timespan,PositionsFile)
+    TotMatrix_speeds = PostProcessSpeeds(speeds)
+    return TotMatrix_speeds
+
+def AssembleRobot(PositionsArray):
+    ServoObjList = []
+    ServoObjDict = {}
+    dxl_data_list = PingServos()
+    for dxl_id in dxl_data_list:
+        print("[ID:%03d] Detected" % (dxl_id))
+        RelativeServo = Servo(dxl_id,PositionsArray[:][dxl_id])
+        ServoObjList.append(RelativeServo)
+        ServoObjDict[dxl_id] = RelativeServo
+
+    #NumberOfServosConnected = len(dxl_data_list)
+
+    FR_limbCount = 0
+    FR_Limb = []
+    FL_limbCount = 0
+    FL_Limb = []
+    BR_limbCount = 0
+    BR_Limb = []
+    BL_limbCount = 0
+    BL_Limb = []
+    Neck_limbCount = 0
+    Neck_Limb = []
+    Spine_limbCount = 0
+    Spine_Limb = []
+    Tail_limbCount = 0
+    Tail_Limb = []
+    TheoLimbList = []
+    TheoLimbDict = {}
+    for ServoID,ServoObj in ServoObjDict:
+        if (ServoID == 1 or ServoID == 2 or ServoID == 3 or ServoID == 4):
+            FR_limbCount += 1
+        elif (ServoID == 5 or ServoID == 6 or ServoID == 7 or ServoID == 8):
+            FL_limbCount += 1
+        elif (ServoID == 9 or ServoID == 10 or ServoID == 11 or ServoID == 12):
+            BR_limbCount += 1
+        elif (ServoID == 13 or ServoID == 14 or ServoID == 15 or ServoID == 16):
+            BL_limbCount += 1
+        elif (ServoID == 17 or ServoID == 18):
+            Neck_limbCount += 1
+        elif (ServoID == 19 or ServoID == 20 or ServoID == 21 or ServoID == 22):
+            Spine_limbCount += 1
+        elif (ServoID == 23 or ServoID == 24):
+            Tail_limbCount += 1
+
+        if (FR_limbCount == 4):
+            FR_Limb = [ServoObjDict[1],ServoObjDict[2],ServoObjDict[3],ServoObjDict[4]]
+            FR_Leg = Leg(1,FR_Limb)
+            TheoLimbList.append(FR_Leg)
+            TheoLimbDict[1] = FR_Leg
+            print("Front Right Limb is Digitally Assembled.")
+        if (FL_limbCount == 4):
+            FL_Limb = [ServoObjDict[5],ServoObjDict[6],ServoObjDict[7],ServoObjDict[8]]
+            FL_Leg = Leg(2,FL_Limb)
+            TheoLimbList.append(FL_Leg)
+            TheoLimbDict[2] = FL_Leg
+            print("Front Left Limb is Digitally Assembled.")
+        if (BR_limbCount == 4):
+            BR_Limb = [ServoObjDict[9],ServoObjDict[10],ServoObjDict[11],ServoObjDict[12]]
+            BR_Leg = Leg(3,BR_Limb)
+            TheoLimbList.append(BR_Leg)
+            TheoLimbDict[3] = BR_Leg
+            print("Back Right Limb is Digitally Assembled.")
+        if (BL_limbCount == 4):
+            BL_Limb = [ServoObjDict[13],ServoObjDict[14],ServoObjDict[15],ServoObjDict[16]]
+            BL_Leg = Leg(4,BL_Limb)
+            TheoLimbList.append(BL_Leg)
+            TheoLimbDict[4] = BL_Leg
+            print("Back Left Limb is Digitally Assembled.")
+        if (Neck_limbCount == 2):
+            Neck_Limb = [ServoObjDict[17],ServoObjDict[18]]
+            NeckStructure = Neck(5,Neck_Limb)
+            TheoLimbList.append(NeckStructure)
+            TheoLimbDict[5] = NeckStructure
+            print("Neck Limb is Digitally Assembled.")
+        if (Spine_limbCount == 4):
+            Spine_Limb = [ServoObjDict[19],ServoObjDict[20],ServoObjDict[21],ServoObjDict[22]]
+            SpineStructure = Spine(6,Spine_Limb)
+            TheoLimbList.append(SpineStructure)
+            TheoLimbDict[6] = SpineStructure
+            print("Spine Limb is Digitally Assembled.")
+        if (Tail_limbCount == 2):
+            Tail_Limb = [ServoObjDict[23],ServoObjDict[24]]
+            TailStructure = Tail(7,Tail_Limb)
+            TheoLimbList.append(TailStructure)
+            TheoLimbDict[7] = TailStructure
+            print("Tail Limb is Digitally Assembled.")
+
+    TheoBody = Body(TheoLimbList)
+
+    return ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody
+
+def RunThreads(ObjToMove,portHandler,packetHandler):
+    global stopVal
+    t1 = Thread(target=ObjToMove.ContinuousMove,args=(portHandler,packetHandler))
+    t2 = Thread(target=DetectStopInput)
+    #thread_running = True
+    t1.start()
+    t2.start()
+    t2.join()
+    #thread_running = False
+    stopVal = 0
+
+def PulsePin(PinNum):
+    GPIO.output(PinNum, 1)
+    time.sleep(PinPulseTime)
+    GPIO.output(PinNum, 0)
