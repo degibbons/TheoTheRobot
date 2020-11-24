@@ -8,6 +8,7 @@ from curtsies import Input
 from threading import Thread
 import RPi.GPIO as GPIO
 import dynamixel_functions as dynamixel  
+import csv
 
 stopVal = 0
 
@@ -1477,20 +1478,25 @@ class Body:
 
 
 class DataDocument:
-    def __init__(self,directory):
-        self.Directory = directory
+    def __init__(self):
+        self.Directory = None
         self.Name = None
-        self.FileExtension = ".txt"
+        self.FileExtension = ".csv"
         self.FileExists = 0
         self.FilePermission = 'w+'
         self.FileRef = None
+        self.CompleteName = None
 
     def CreateDoc(self):
         print("Your data file will be saved in the Records sub-folder.\n")
         tempName = input("Enter the name of the File you want to create: ")
         print("\n")
         self.Name = tempName + self.FileExtension
-        self.FileRef = open(self.Name,self.FilePermission)
+        path = os.getcwd()
+        self.Directory = path + '\\Records'
+        self.CompleteName = self.Directory + '\\' + self.Name
+        self.FileRef = open(self.CompleteName,self.FilePermission)
+        self.FileExists = 1
 
     def CheckForDoc(self):
         if self.FileExists == 0:
@@ -1499,8 +1505,11 @@ class DataDocument:
             return True
 
     def WriteToDoc(self,InData):
-        self.FilePermission = 'a+' # Need to close and open with different permission?
-        self.FileRef.write(IndData)
+        with open('eggs.csv', 'w', newline='') as csvfile:
+        NewDocWriter = csv.writer(csvfile, delimiter=' ',
+            quoting=csv.QUOTE_MINIMAL)
+        NewDocWriter.writerow(['Test'] * 5 + ['Test'])
+        NewDocWriter.writerow(['Test', 'Test', 'Test'])
 
     def CloseDoc(self):
         self.FilePermission = 'a+'

@@ -1,5 +1,6 @@
 ### Theo Master Script To Be Run After Pre-Installation Script is Run 
 # (Pre-Installation Script will install all libraries needed to run Master Script)
+# (Will also create a Data subdirectory and prepackage processing code for post-data analysis)
 # Author: Dan Gibbons
 # Version: 0.0.1
 ###

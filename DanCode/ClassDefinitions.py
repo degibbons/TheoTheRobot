@@ -5,6 +5,7 @@ from ControlTable import *
 from dynamixel_sdk import *
 from time import sleep
 import dynamixel_functions as dynamixel  
+import csv
 
 stopVal = 0
 
@@ -1480,20 +1481,25 @@ class Body:
 
 
 class DataDocument:
-    def __init__(self,directory):
-        self.Directory = directory
+    def __init__(self):
+        self.Directory = None
         self.Name = None
         self.FileExtension = ".txt"
         self.FileExists = 0
         self.FilePermission = 'w+'
         self.FileRef = None
+        self.CompleteName = None
 
     def CreateDoc(self):
         print("Your data file will be saved in the Records sub-folder.\n")
         tempName = input("Enter the name of the File you want to create: ")
         print("\n")
         self.Name = tempName + self.FileExtension
-        self.FileRef = open(self.Name,self.FilePermission)
+        path = os.getcwd()
+        self.Directory = path + '\\Records'
+        self.CompleteName = self.Directory + '\\' + self.Name
+        self.FileRef = open(self.CompleteName,self.FilePermission)
+        self.FileExists = 1
 
     def CheckForDoc(self):
         if self.FileExists == 0:
@@ -1503,11 +1509,12 @@ class DataDocument:
 
     def WriteToDoc(self,InData):
         self.FilePermission = 'a+' # Need to close and open with different permission?
-        self.FileRef.write(IndData)
+        self.FileRef.write(InData)
 
     def CloseDoc(self):
         self.FilePermission = 'a+'
         self.FileRef.close()
+        self.FileExists = 0
 
     def __del__(self):
         pass
