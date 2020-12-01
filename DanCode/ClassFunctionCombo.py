@@ -41,6 +41,7 @@ class Servo:
         self.Positions = Positions
         self.Speeds = []
         self.HomeSpeed = STRAIGHT_SPEED
+        self.IsHome = None
         self.Activated = 1 # Change this to zero if you don't want it to move
         self.FirstMovePosition = 0
         self.OffsetPercent = 0
@@ -55,6 +56,7 @@ class Servo:
         self.StrideTime = 0
         self.TotalTime = 0
         self.IndexShifts = RotatePositionArray(list(range(0,22)),self.OffsetPercent/10,len(list(range(0,22))))
+        self.DataArray = []
 
     def InitialSetup(self): 
         #Set drive mode to velocity based
@@ -1060,6 +1062,7 @@ class Servo:
     def UpdateOtherValues(self,GivPos,GivVel):
         self.GivenPosition = GivPos
         self.GivenSpeed = GivVel
+        self.DataArray = [self.GivenPosition,self.PresentPosition,self.GivenSpeed,self.,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
 
     def RebootServo(self):
         import os
@@ -1505,11 +1508,9 @@ class DataDocument:
             return True
 
     def WriteToDoc(self,InData):
-        with open('eggs.csv', 'w', newline='') as csvfile:
-        NewDocWriter = csv.writer(csvfile, delimiter=' ',
-            quoting=csv.QUOTE_MINIMAL)
-        NewDocWriter.writerow(['Test'] * 5 + ['Test'])
-        NewDocWriter.writerow(['Test', 'Test', 'Test'])
+        with open(self.CompleteName, 'w', newline='') as csvfile:
+        NewDocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
+        NewDocWriter.writerow(InData)
 
     def CloseDoc(self):
         self.FilePermission = 'a+'
