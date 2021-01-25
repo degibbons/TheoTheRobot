@@ -28,7 +28,7 @@ ADDR_PRO_BAUDRATE           = 8                             # Control table addr
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
 # Positions File Name
-PositionsFile = "KinematicsTiming4.csv"
+PositionsFile = "Kinematics_01.25.2021.csv"
 
 # Default setting
 DXL_ID = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]

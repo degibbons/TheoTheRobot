@@ -989,21 +989,22 @@ class Servo:
         # Close port
         portHandler.closePort()
 
-    def ContinuousMove(self,portHandler,packetHandler):
+    def ContinuousMove(self,portHandler,packetHandler,DataRecord,CurrentDoc):
         global stopVal
-
         index = 1
         StartTime = time.perf_counter()
         firstMove = True
+
+
         while 1:
             self.SetServoVelocity(self.Speeds[index])
             self.MoveServo(self.Positions[index])
-            self.UpdateOtherValues(self.Positions[index],self.Speeds[index])
+            
             if (firstMove == True):
                 StrideTimer = time.perf_counter()
                 PhaseTimer = time.perf_counter()
                 firstMove == False
-            index += 1
+            #index += 1
             if (stopVal == 1):
                 print("\nFinishing Movement.\n")
                 break
@@ -1015,7 +1016,7 @@ class Servo:
                 PhaseTimer = time.perf_counter()
             elif (index == 11):
                 PhaseTimer = time.perf_counter()
-            isStopped = 0
+
             while 1:
                 dxl_mov, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, ADDR_MOVING)
                 if dxl_comm_result != COMM_SUCCESS:
@@ -1025,14 +1026,21 @@ class Servo:
                 if dxl_mov == 1:
                     pass
                 else:
+                    dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_PRESENT_POSITION)
+                    if dxl_comm_result != COMM_SUCCESS:
+                        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                    elif dxl_error != 0:
+                        print("%s" % packetHandler.getRxPacketError(dxl_error))
                     timeMarker = time.perf_counter()
-                    isStopped == 1
-                    break
-                if isStopped == 0:
-                    pass
-                else:
+                    self.UpdatePhase(index)
                     self.UpdateTimeValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    self.UpdateOtherValues(self.Positions[index],self.Speeds[index]) 
+                    if DataRecord == True:
+                        CurrentDoc.WriteToDoc(self.DataArray)
+                    else:
+                        pass
                     break
+            index += 1
 
     def DisplayTraitValues(self):
         print("Relevant Traits Will Print Out When Called...")
@@ -1062,7 +1070,7 @@ class Servo:
     def UpdateOtherValues(self,GivPos,GivVel):
         self.GivenPosition = GivPos
         self.GivenSpeed = GivVel
-        self.DataArray = [self.GivenPosition,self.PresentPosition,self.GivenSpeed,self.,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        self.DataArray = [self.ID,self.GivenPosition,self.PresentPosition,self.GivenSpeed,self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
 
     def RebootServo(self):
         import os
@@ -1231,7 +1239,7 @@ class Servo:
             getch()
             quit()
 
-        sleep(0.2)
+        time.sleep(0.2)
 
         # Read Dynamixel baudnum
         dxl_baudnum_read = dynamixel.read1ByteTxRx(port_num, PROTOCOL_VERSION, self.ID, ADDR_PRO_BAUDRATE)
@@ -1269,11 +1277,13 @@ class Limb:
             self.ServoDict[i] = self.IDList[i] 
 
         self.IsHome = None # Check all Servo Members to set this value
-
+        self.FirstMovePosition = None # Check all Servo Members to set this value
         self.TotalTime = 0
 
         self.GoalVelocity = []
         self.GoalPosition = []
+        self.PresentPositions = []
+
 
 class Leg(Limb):
     def __init__(self,limbnum,servolist):
@@ -1291,19 +1301,10 @@ class Leg(Limb):
         else:
             print("The Offsets for the Servos that make up this Leg are not consistent. Please Fix.")
         self.IndexShifts = RotatePositionArray(list(range(0,22)),self.Offset/10,len(list(range(0,22))))
-
-    def UpdatePhase(self,IndexIn):
-        for k in self.ServoList:
-            if self.IndexShifts[IndexIn] in list(range(1,11)):
-                k.Phase = 2
-            elif self.IndexShifts[IndexIn] == 11:
-                k.Phase = -1
-            elif self.IndexShifts[IndexIn] in list(range(12,22)):
-                k.Phase = -2
-            elif self.IndexShifts[IndexIn] == 0:
-                k.Phase = 1
-            else:
-                k.Phase = 0
+        self.DataArray1 = []
+        self.DataArray2 = []
+        self.DataArray3 = []
+        self.DataArray4 = []
 
     def ReadData(self,IndexIn,portHandler,packetHandler):
         # Initialize GroupSyncRead instace for Present Position
@@ -1391,7 +1392,7 @@ class Leg(Limb):
         self.IsHome = True
         print(f"Limb #{self.LimbNumber} Moved To Home Position\n")
 
-    def ContinuousMove(self,portHandler,packetHandler):
+    def ContinuousMove(self,portHandler,packetHandler,DataRecord,CurrentDoc):
         global stopVal
         # Initialize GroupSyncRead instace for Present Position
         groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -1428,26 +1429,135 @@ class Leg(Limb):
                 for i,j in self.ServoDict:
                     # Get Dynamixel#1 present Moving value
                     dxl_mov = groupSyncRead.getData(j, ADDR_MOVING, LEN_MOVING)
+                    
                     if (dxl_mov == 0) and (isStopped[i] == 0):
                         timeMarkers[i] = time.perf_counter()
                         isStopped[i] = 1
+                    #self.PresentPositions[i-1] = 
 
                 if 0 in isStopped:
                     pass
                 else:
+                    self.UpdatePhase(index)
                     self.UpdateTimeValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    self.UpdateOtherValues(index)
                     # PRINT INFORMATION TO DOCUMENT HERE USING TIMEMARKERS LIST
+                    if DataRecord == True: 
+                        CurrentDoc.WriteToDoc(self.DataArray1)
+                        CurrentDoc.WriteToDoc(self.DataArray2)
+                        CurrentDoc.WriteToDoc(self.DataArray3)
+                        CurrentDoc.WriteToDoc(self.DataArray4)
                     break
 
+                for h in self.IDList:
+                    dxl_addparam_result = groupSyncRead.addParam(h)
+                if dxl_addparam_result != True:
+                    print("[ID:%03d] groupSyncRead addparam failed" % h)
+                    quit()
+
+
+                # Syncread present position
+                dxl_comm_result = groupSyncRead.txRxPacket()
+                if dxl_comm_result != COMM_SUCCESS:
+                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+                        # Syncread present position
+                dxl_comm_result = groupSyncRead.txRxPacket()
+                if dxl_comm_result != COMM_SUCCESS:
+                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+                #time.sleep(PreferedDelay)
+
+
+                for j in  self.IDList:
+                    dxl_getdata_result = groupSyncRead.isAvailable(j, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                    if dxl_getdata_result != True:
+                        print("[ID:%03d] groupSyncRead getdata failed" % j)
+                        quit()
+
+
+
+                #time.sleep(PreferedDelay)
+
+                # Get Dynamixel#1 present position value
+                dxl1_present_position = groupSyncRead.getData(self.IDList[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+                #time.sleep(PreferedDelay)
+
+                # Get Dynamixel#2 present position value
+                dxl2_present_position = groupSyncRead.getData(self.IDList[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+                #time.sleep(PreferedDelay)
+
+                # Get Dynamixel#3 present position value
+                dxl3_present_position = groupSyncRead.getData(self.IDList[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+                #time.sleep(PreferedDelay)
+
+                # Get Dynamixel#4 present position value
+                dxl4_present_position = groupSyncRead.getData(self.IDList[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+                self.PresentPositions = [dxl1_present_position,dxl2_present_position,dxl3_present_position,dxl4_present_position]
+
+
+    def UpdatePhase(self,IndexIn):
+        for k in self.ServoList:
+            if self.IndexShifts[IndexIn] in list(range(1,11)):
+                k.Phase = 2
+            elif self.IndexShifts[IndexIn] == 11:
+                k.Phase = -1
+            elif self.IndexShifts[IndexIn] in list(range(12,22)):
+                k.Phase = -2
+            elif self.IndexShifts[IndexIn] == 0:
+                k.Phase = 1
+            else:
+                k.Phase = 0
     def UpdateTimeValues(self,IndexIn,StartTimeRef,StartStrideRef,StartPhaseRef):
         RelevReferenceTime = time.perf_counter()
         if (IndexIn == 0):
             self.IsHome = True
-        else:
+            self.FirstMovePosition = False
+        elif (IndexIn == 1):
             self.IsHome = False
+            self.FirstMovePosition = True
+        elif (IndexIn >= 0 and IndexIn <= 10):
+            self.IsHome = False
+            self.FirstMovePosition = False
+        elif (IndexIn >= 11 and IndexIn <= 21):
+            self.IsHome = False
+            self.FirstMovePosition = False
+
+        if (self.LimbNumber == 1):
+             self.StrideIndex = IndexIn + 1
+             if IndexIn == 21:
+                 self.StrideIndex = 0   
+        elif (self.LimbNumber == 2):
+            self.StrideIndex = IndexIn + 9
+            if IndexIn >= 13:
+                self.StrideIndex = self.StrideIndex - 22
+        elif (self.LimbNumber == 3):
+            self.StrideIndex = IndexIn + 8
+            if IndexIn >= 14:
+                self.StrideIndex = self.StrideIndex = self.StrideIndex - 22
+        elif (self.LimbNumber == 4):
+            self.StrideIndex = IndexIn
+
         self.PhaseTime = RelevReferenceTime - StartPhaseRef
         self.StrideTime = RelevReferenceTime - StartStrideRef
         self.TotalTime = RelevReferenceTime - StartTimeRef
+        
+    def UpdateOtherValues(self,IndexIn):
+        self.GoalVelocity = []
+        self.GoalPosition = []
+
+        for b in self.ServoList:
+            self.GoalVelocity.append(b.Speeds[IndexIn])
+            self.GoalPosition.append(b.Positions[IndexIn])
+
+        self.DataArray1 = [self.IDList[0],self.GoalPosition[0],self.PresentPositions[0],self.GoalVelocity[0],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        self.DataArray2 = [self.IDList[1],self.GoalPosition[1],self.PresentPositions[1],self.GoalVelocity[1],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        self.DataArray3 = [self.IDList[2],self.GoalPosition[2],self.PresentPositions[2],self.GoalVelocity[2],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        self.DataArray4 = [self.IDList[3],self.GoalPosition[3],self.PresentPositions[3],self.GoalVelocity[3],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
 
 
 class Neck(Limb):
@@ -1498,8 +1608,15 @@ class DataDocument:
         path = os.getcwd()
         self.Directory = path + '\\Records'
         self.CompleteName = self.Directory + '\\' + self.Name
-        self.FileRef = open(self.CompleteName,self.FilePermission)
+        headers = ["Servo ID","Goal Position","Position at time of Recording","Speed Given to get to goal position","Is This Home Position?",
+           "Is this the first position it moves to after home position?","Index of Movement",
+           "Phase is Stance or Swing or transition?","Time Value Within Phase","Time Value Within Stride",
+           "Time Value Total"]
+        with open(self.CompleteName, 'w', newline='') as csvfile:
+            DocWriter = csv.writer(csvfile, delimiter=',')
+            DocWriter.writerow(headers)
         self.FileExists = 1
+            
 
     def CheckForDoc(self):
         if self.FileExists == 0:
@@ -1508,13 +1625,9 @@ class DataDocument:
             return True
 
     def WriteToDoc(self,InData):
-        with open(self.CompleteName, 'w', newline='') as csvfile:
-        NewDocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
-        NewDocWriter.writerow(InData)
-
-    def CloseDoc(self):
-        self.FilePermission = 'a+'
-        self.FileRef.close()
+        with open(self.CompleteName, 'a', newline='') as csvfile:
+            DocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
+            DocWriter.writerow(InData)
 
     def __del__(self):
         pass
@@ -1768,7 +1881,7 @@ def PostProcessSpeeds(speeds):
 
     FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
     HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
-    TOT_VEL = np.concatenate(FL_VEL,HL_VEL,axis=1)
+    TOT_VEL = np.concatenate((FL_VEL,HL_VEL),axis=1)
     
     return TOT_VEL
 
@@ -1983,7 +2096,6 @@ def CleanUp(BodyObj,LimbObjList,ServoObjList,CurrentDoc):
     for each_servo in ServoObjList:
         each_servo.__del__()
     if CurrentDoc != None:
-        CurrentDoc.CloseDoc()
         CurrentDoc.__del__()
 
 def ShutDown():

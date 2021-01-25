@@ -8,9 +8,9 @@
 import os
 import numpy as np
 import time
-from ClassDefinitions import *
+from ClassFunctionCombo import *
 from ControlTable import *
-from RelevantFunctions import *
+#from RelevantFunctions import *
 from dynamixel_sdk import *
 from threading import Thread
 
@@ -35,9 +35,13 @@ else:
 [FrontPositions, BackPositions] = PostProcessPositions()
 PositionsArray = np.concatenate((FrontPositions,BackPositions),axis=1)
 
-CurrentDoc = None
+
 
 [ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody] = AssembleRobot(PositionsArray)
+
+# Make a file to record to just in case
+CurrentDoc = DataDocument()
+
 
 while 1:
     PrintUserMenu()
@@ -62,12 +66,21 @@ while 1:
             print("\n")
             desired_speed = int(input("At what speed do you wan't the servo to move at?: "))
             print("\n")
+            desired_record = str(input("Do you want to record the resulting data?(Y/n): "))
+            if (desired_record.lower() == 'y'):
+                if (CurrentDoc.CheckForDoc()):
+                    pass
+                else:
+                    CurrentDoc.CreateDoc()
             ServoObjDict[desired_servo].SetServoVelocity(desired_speed)
             ServoObjDict[desired_servo].MoveServo(desired_position)
         elif (desired_movement.lower() == 'c'):
             TotMatrix_speeds = SpeedMerge()
             ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:][desired_servo]
             RunThreads(ServoObjDict[desired_servo],portHandler,packetHandler)
+        else:
+            print("That's not a recognized option, please try again.\n")
+            continue
     elif(desired_action == 2): # Move 1 Limb
         print("\nThe limbs are laid out as follows:")
         print("1: Front Right Limb")
@@ -101,7 +114,9 @@ while 1:
                 if getch() == chr(0x0D):
                     break
             RunThreads(TheoLimbDict[desired_servo_limb],portHandler,packetHandler)
-        
+        else:
+            print("That's not a recognized option, please try again.\n")
+            continue
     elif(desired_action == 3): # Move entire robot
         print("All available Servos will run their given movement instructions.")
         TotMatrix_Speeds = SpeedMerge()
@@ -178,9 +193,9 @@ while 1:
         CleanUp(TheoBody,TheoLimbList, ServoObjList,CurrentDoc)
         ShutDown()
 
-if __name__ == "__main__":
-    # Run Main Script
-    pass
-else:
-    # Run Setup? Or place in separate code?
-    pass
+# if __name__ == "__main__":
+#     # Run Main Script
+#     pass
+# else:
+#     # Run Setup? Or place in separate code?
+#     pass
