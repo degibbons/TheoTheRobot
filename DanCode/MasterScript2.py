@@ -51,7 +51,7 @@ while 1:
     if (desired_action == 1): # Move 1 Servo
         desired_servo = int(input("Please enter the desired servo # you wish to move: "))
         print("\n")
-        ServoObjDict[desired_servo].InitialSetup
+        ServoObjDict[desired_servo].InitialSetup()
         ServoObjDict[desired_servo].ToggleTorque(1,portHandler,packetHandler)
         desired_origin = input("Would you like this servo to move to it's natural Home Position?[Y/n]: ")
         print("\n")
@@ -77,7 +77,7 @@ while 1:
         elif (desired_movement.lower() == 'c'):
             TotMatrix_speeds = SpeedMerge()
             ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:][desired_servo]
-            RunThreads(ServoObjDict[desired_servo],portHandler,packetHandler)
+            RunThreads(ServoObjDict[desired_servo],portHandler,packetHandler,False,CurrentDoc)
         else:
             print("That's not a recognized option, please try again.\n")
             continue

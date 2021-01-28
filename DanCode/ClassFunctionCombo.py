@@ -7,7 +7,7 @@ import time
 from curtsies import Input
 from threading import Thread
 import RPi.GPIO as GPIO
-import dynamixel_functions as dynamixel  
+#import dynamixel_functions as dynamixel  
 import csv
 
 stopVal = 0
@@ -1264,7 +1264,7 @@ class Limb:
     def __init__(self,limbnum,servolist):
         self.LimbNumber = limbnum
 
-        self.ServoList = [servolist]
+        self.ServoList = servolist
 
         getNum = lambda a : a.ID
         self.IDList = list(map(getNum,self.ServoList))
@@ -2097,6 +2097,7 @@ def CleanUp(BodyObj,LimbObjList,ServoObjList,CurrentDoc):
         each_servo.__del__()
     if CurrentDoc != None:
         CurrentDoc.__del__()
+    PortHandler.closePort()
 
 def ShutDown():
     print("Shutting down system.\n")
@@ -2137,7 +2138,7 @@ def AssembleRobot(PositionsArray):
     Tail_Limb = []
     TheoLimbList = []
     TheoLimbDict = {}
-    for ServoID,_ in ServoObjDict:
+    for ServoID in ServoObjDict:
         if (ServoID == 1 or ServoID == 2 or ServoID == 3 or ServoID == 4):
             FR_limbCount += 1
         elif (ServoID == 5 or ServoID == 6 or ServoID == 7 or ServoID == 8):
@@ -2200,9 +2201,9 @@ def AssembleRobot(PositionsArray):
 
     return ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody
 
-def RunThreads(ObjToMove,portHandler,packetHandler):
+def RunThreads(ObjToMove,portHandler,packetHandler,DataRecord,CurrentDoc):
     global stopVal
-    t1 = Thread(target=ObjToMove.ContinuousMove,args=(portHandler,packetHandler))
+    t1 = Thread(target=ObjToMove.ContinuousMove,args=(portHandler,packetHandler,DataRecord,CurrentDoc))
     t2 = Thread(target=DetectStopInput)
     #thread_running = True
     t1.start()
