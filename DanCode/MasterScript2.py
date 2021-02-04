@@ -76,7 +76,7 @@ while 1:
             ServoObjDict[desired_servo].MoveServo(desired_position)
         elif (desired_movement.lower() == 'c'):
             TotMatrix_speeds = SpeedMerge()
-            ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:][desired_servo]
+            ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:][desired_servo-1]
             RunThreads(ServoObjDict[desired_servo],portHandler,packetHandler,False,CurrentDoc)
         else:
             print("That's not a recognized option, please try again.\n")
@@ -94,26 +94,47 @@ while 1:
         print("\n")
         desired_movement = input("Would you like the limb to move One Time or Continuously?[o/c]: ")
         TotMatrix_speeds = SpeedMerge()
-        TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler,ReadOption=False)
         for each_servo in TheoLimbDict[desired_servo_limb].ServoList:
             each_servo.Speeds = TotMatrix_speeds[:][each_servo.ID]
+        TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler)
+        
         if (desired_movement.lower() == 'o'):
             desired_position = int(input("To what location index do you want the limb to move?: "))
             print("\n")
-            print("Press Enter to start when ready.")
-            print("When done, hit Escape.\n")
-            while 1:
-                if getch() == chr(0x0D):
-                    break
-            TheoLimbDict[desired_servo_limb].MoveLimb(desired_position,portHandler,packetHandler,ReadOption=False)
-        elif (desired_movement.lower() == 'c'):
+            desired_record = str(input("Do you want to record the resulting data?(Y/n): "))
+            if (desired_record.lower() == 'y'):
+                RecordChoice = True
+                if (CurrentDoc.CheckForDoc()):
+                    pass
+                else:
+                    CurrentDoc.CreateDoc()
+            else:
+                RecordChoice = False
             print("\n")
             print("Press Enter to start when ready.")
             print("When done, hit Escape.\n")
             while 1:
                 if getch() == chr(0x0D):
                     break
-            RunThreads(TheoLimbDict[desired_servo_limb],portHandler,packetHandler)
+            TheoLimbDict[desired_servo_limb-1].MoveLimb(desired_position,portHandler,packetHandler,RecordChoice)
+        elif (desired_movement.lower() == 'c'):
+            print("\n")
+            desired_record = str(input("Do you want to record the resulting data?(Y/n): "))
+            if (desired_record.lower() == 'y'):
+                RecordChoice = True
+                if (CurrentDoc.CheckForDoc()):
+                    pass
+                else:
+                    CurrentDoc.CreateDoc()
+            else:
+                RecordChoice = False
+            print("\n")
+            print("Press Enter to start when ready.")
+            print("When done, hit Escape.\n")
+            while 1:
+                if getch() == chr(0x0D):
+                    break
+            RunThreads(TheoLimbDict[desired_servo_limb-1],portHandler,packetHandler,RecordChoice,CurrentDoc)
         else:
             print("That's not a recognized option, please try again.\n")
             continue

@@ -12,6 +12,8 @@ import csv
 
 stopVal = 0
 
+
+################################ CLASS SECTION ####################################################
 class Servo:
     def __init__(self,IDnum,Positions):
         self.ID = IDnum
@@ -1016,7 +1018,6 @@ class Servo:
                 PhaseTimer = time.perf_counter()
             elif (index == 11):
                 PhaseTimer = time.perf_counter()
-
             while 1:
                 dxl_mov, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, ADDR_MOVING)
                 if dxl_comm_result != COMM_SUCCESS:
@@ -1274,7 +1275,7 @@ class Limb:
         self.ServoDict = {}
 
         for i in rangeList:
-            self.ServoDict[i] = self.IDList[i] 
+            self.ServoDict[i] = self.ServoList[i] 
 
         self.IsHome = None # Check all Servo Members to set this value
         self.FirstMovePosition = None # Check all Servo Members to set this value
@@ -1326,16 +1327,16 @@ class Leg(Limb):
                 quit()
 
             # Get Dynamixel present position value
-
-        dxl_present_position = groupSyncRead.getData(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
-        PresentPositions.append(dxl_present_position)
+            else:
+                dxl_present_position = groupSyncRead.getData(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                PresentPositions.append(dxl_present_position)
 
         print("======================================================================")
         GetIndexString = f"Stride #{self.StrideCount}, Movement #{IndexIn}"
         print(GetIndexString)
-        for f,g in self.ServoDict:
-            GetPosString = "[ID:%03d] GoalPos:%03d  PresPos:%03d" % (g, self.GoalPosition[f], PresentPositions[f])
-            GetVelString = "[ID:%03d] Velocity Given:%03d" % (g, self.GoalVelocity[f])
+        for f,g in self.ServoDict.items():
+            GetPosString = "[ID:%03d] GoalPos:%03d  PresPos:%03d" % (g, self.GoalPosition[f-1], PresentPositions[f-1])
+            GetVelString = "[ID:%03d] Velocity Given:%03d" % (g, self.GoalVelocity[f-1])
             print(GetPosString)
             print(GetVelString)
         print("======================================================================")
@@ -1350,21 +1351,27 @@ class Leg(Limb):
         # Initialize GroupSyncWrite instance
         groupSyncWriteVEL = GroupSyncWrite(portHandler, packetHandler, ADDR_PROFILE_VELOCITY, LEN_VELOCITY_LIMIT)
 
+        self.GoalVelocity = []
+        self.GoalPosition = []
+
         for b in self.ServoList:
-            self.GoalVelocity.append(FormatSendData(b.Speeds[IndexIn]))
+            self.GoalVelocity.append(b.Speeds[IndexIn])
             self.GoalPosition.append(FormatSendData(b.Positions[IndexIn]))
 
-        for c, d in self.ServoDict:
-            dxl_addparam_result = groupSyncWriteVEL.addParam(d,self.GoalVelocity[c])
+        index = 0
+        for _ , d in self.ServoDict.items():
+            FormattedVel = FormatSendData(self.GoalVelocity[index])
+            dxl_addparam_result = groupSyncWriteVEL.addParam(d.ID,FormattedVel)
             if dxl_addparam_result != True:
-                print("[ID:%03d] groupSyncWrite addparam failed" % d)
+                print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
                 quit()
 
-
-            dxl_addparam_result = groupSyncWritePOS.addParam(d,self.GoalPosition[c])
+            FormattedPos = FormatSendData(self.GoalPosition[index])
+            dxl_addparam_result = groupSyncWritePOS.addParam(d.ID,FormattedPos)
             if dxl_addparam_result != True:
-                print("[ID:%03d] groupSyncWrite addparam failed" % d)
+                print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
                 quit()
+            index += 1
 
         # Syncwrite goal velocity
         dxl_comm_result = groupSyncWriteVEL.txPacket()
@@ -1426,13 +1433,13 @@ class Leg(Limb):
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
-                for i,j in self.ServoDict:
+                for i,j in self.ServoDict.items():
                     # Get Dynamixel#1 present Moving value
                     dxl_mov = groupSyncRead.getData(j, ADDR_MOVING, LEN_MOVING)
                     
-                    if (dxl_mov == 0) and (isStopped[i] == 0):
-                        timeMarkers[i] = time.perf_counter()
-                        isStopped[i] = 1
+                    if (dxl_mov == 0) and (isStopped[i-1] == 0):
+                        timeMarkers[i-1] = time.perf_counter()
+                        isStopped[i-1] = 1
                     #self.PresentPositions[i-1] = 
 
                 if 0 in isStopped:
@@ -1589,6 +1596,10 @@ class Body:
     def ContinuousMove(self,portHandler,packetHandler):
         pass # Going to need threads for these???
 
+    def __del__(self):
+            pass
+
+
 
 class DataDocument:
     def __init__(self):
@@ -1631,6 +1642,8 @@ class DataDocument:
 
     def __del__(self):
         pass
+
+################################ FUNCTIONS SECTION ####################################################
 
 def InitialSetup():
     # Initialize PortHandler instance
@@ -2165,7 +2178,7 @@ def AssembleRobot(PositionsArray):
             FL_Leg = Leg(2,FL_Limb)
             TheoLimbList.append(FL_Leg)
             TheoLimbDict[2] = FL_Leg
-            print("Front Left Limb is Digitally Assembled.")
+            print("Front Left Limb is Digitally Assembled.")  
         if (BR_limbCount == 4):
             BR_Limb = [ServoObjDict[9],ServoObjDict[10],ServoObjDict[11],ServoObjDict[12]]
             BR_Leg = Leg(3,BR_Limb)
