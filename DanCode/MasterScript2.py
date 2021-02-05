@@ -112,11 +112,10 @@ while 1:
                 RecordChoice = False
             print("\n")
             print("Press Enter to start when ready.")
-            print("When done, hit Escape.\n")
             while 1:
                 if getch() == chr(0x0D):
                     break
-            TheoLimbDict[desired_servo_limb-1].MoveLimb(desired_position,portHandler,packetHandler,RecordChoice)
+            TheoLimbDict[desired_servo_limb].MoveLimb(desired_position,portHandler,packetHandler,RecordChoice)
         elif (desired_movement.lower() == 'c'):
             print("\n")
             desired_record = str(input("Do you want to record the resulting data?(Y/n): "))
@@ -134,7 +133,7 @@ while 1:
             while 1:
                 if getch() == chr(0x0D):
                     break
-            RunThreads(TheoLimbDict[desired_servo_limb-1],portHandler,packetHandler,RecordChoice,CurrentDoc)
+            RunThreads(TheoLimbDict[desired_servo_limb],portHandler,packetHandler,RecordChoice,CurrentDoc)
         else:
             print("That's not a recognized option, please try again.\n")
             continue
@@ -213,6 +212,7 @@ while 1:
     elif(desired_action == 5): # Shut down robot, delete object structures, and close documents
         CleanUp(TheoBody,TheoLimbList, ServoObjList,CurrentDoc)
         ShutDown()
+        break
 
 # if __name__ == "__main__":
 #     # Run Main Script

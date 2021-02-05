@@ -1275,7 +1275,7 @@ class Limb:
         self.ServoDict = {}
 
         for i in rangeList:
-            self.ServoDict[i] = self.ServoList[i] 
+            self.ServoDict[i+1] = self.ServoList[i] 
 
         self.IsHome = None # Check all Servo Members to set this value
         self.FirstMovePosition = None # Check all Servo Members to set this value
@@ -1355,18 +1355,18 @@ class Leg(Limb):
         self.GoalPosition = []
 
         for b in self.ServoList:
-            self.GoalVelocity.append(b.Speeds[IndexIn])
+            self.GoalVelocity.append(FormatSendData(int(b.Speeds[IndexIn])))
             self.GoalPosition.append(FormatSendData(b.Positions[IndexIn]))
 
         index = 0
         for _ , d in self.ServoDict.items():
-            FormattedVel = FormatSendData(self.GoalVelocity[index])
+            FormattedVel = self.GoalVelocity[index]
             dxl_addparam_result = groupSyncWriteVEL.addParam(d.ID,FormattedVel)
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
                 quit()
 
-            FormattedPos = FormatSendData(self.GoalPosition[index])
+            FormattedPos = self.GoalPosition[index]
             dxl_addparam_result = groupSyncWritePOS.addParam(d.ID,FormattedPos)
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
@@ -1378,13 +1378,13 @@ class Leg(Limb):
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
-        # Clear syncwrite parameter storage
-        groupSyncWriteVEL.clearParam()
-
-         # Syncwrite goal position
+        # Syncwrite goal position
         dxl_comm_result = groupSyncWritePOS.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+        # Clear syncwrite parameter storage
+        groupSyncWriteVEL.clearParam()
 
         # Clear syncwrite parameter storage
         groupSyncWritePOS.clearParam()
@@ -1565,6 +1565,9 @@ class Leg(Limb):
         self.DataArray2 = [self.IDList[1],self.GoalPosition[1],self.PresentPositions[1],self.GoalVelocity[1],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
         self.DataArray3 = [self.IDList[2],self.GoalPosition[2],self.PresentPositions[2],self.GoalVelocity[2],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
         self.DataArray4 = [self.IDList[3],self.GoalPosition[3],self.PresentPositions[3],self.GoalVelocity[3],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+
+    def __del__(self):
+            pass        
 
 
 class Neck(Limb):
@@ -2110,7 +2113,6 @@ def CleanUp(BodyObj,LimbObjList,ServoObjList,CurrentDoc):
         each_servo.__del__()
     if CurrentDoc != None:
         CurrentDoc.__del__()
-    PortHandler.closePort()
 
 def ShutDown():
     print("Shutting down system.\n")
