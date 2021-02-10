@@ -76,7 +76,12 @@ while 1:
             ServoObjDict[desired_servo].MoveServo(desired_position)
         elif (desired_movement.lower() == 'c'):
             TotMatrix_speeds = SpeedMerge()
-            ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:][desired_servo-1]
+            print("\nFINAL Shape of Speeds")
+            print(np.shape(TotMatrix_speeds))
+            print("\n")
+            print(TotMatrix_speeds[:,desired_servo-1])
+            ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:,desired_servo-1]
+            print(np.size(ServoObjDict[desired_servo].Speeds,0))
             RunThreads(ServoObjDict[desired_servo],portHandler,packetHandler,False,CurrentDoc)
         else:
             print("That's not a recognized option, please try again.\n")
@@ -95,7 +100,7 @@ while 1:
         desired_movement = input("Would you like the limb to move One Time or Continuously?[o/c]: ")
         TotMatrix_speeds = SpeedMerge()
         for each_servo in TheoLimbDict[desired_servo_limb].ServoList:
-            each_servo.Speeds = TotMatrix_speeds[:][each_servo.ID]
+            each_servo.Speeds = TotMatrix_speeds[:,each_servo.ID-1]
         TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler)
         
         if (desired_movement.lower() == 'o'):

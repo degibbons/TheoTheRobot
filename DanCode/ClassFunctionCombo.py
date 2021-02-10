@@ -11,7 +11,8 @@ import RPi.GPIO as GPIO
 import csv
 
 stopVal = 0
-
+global t1
+global t2
 
 ################################ CLASS SECTION ####################################################
 class Servo:
@@ -29,7 +30,7 @@ class Servo:
             print("Failed to open the port")
             print("Press any key to terminate...")
             getch() # pylint: disable=undefined-variable
-            quit()
+            return
 
         # Set port baudrate
         if self.portHandler.setBaudRate(BAUDRATE):
@@ -38,7 +39,7 @@ class Servo:
             print("Failed to change the baudrate")
             print("Press any key to terminate...")
             getch() # pylint: disable=undefined-variable
-            quit()
+            return
 
         self.Positions = Positions
         self.Speeds = []
@@ -140,7 +141,8 @@ class Servo:
                 print("Dynamixel#%d torque off" % self.ID)
 
     def SetServoVelocity(self,InVelocity):
-        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PROFILE_VELOCITY,InVelocity)
+        print(InVelocity)
+        dxl_comm_result, dxl_error = self.packetHandler.write4ByteTxRx(self.portHandler, self.ID, ADDR_PROFILE_VELOCITY,int(InVelocity))
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
         elif dxl_error != 0:
@@ -196,7 +198,7 @@ class Servo:
             print("Failed to open the port")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
 
 
         # Set port baudrate
@@ -206,7 +208,7 @@ class Servo:
             print("Failed to change the baudrate")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
 
         DataAddr = DataAddrConversion(traitNum)
 
@@ -587,7 +589,7 @@ class Servo:
             print("Failed to open the port")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
         
         
         # Set port baudrate
@@ -597,7 +599,7 @@ class Servo:
             print("Failed to change the baudrate")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
     
         DataAddr = DataAddrConversion(traitNum)
     
@@ -996,9 +998,18 @@ class Servo:
         index = 1
         StartTime = time.perf_counter()
         firstMove = True
-
-
+        print("AfterSpeeds")
+        print(np.size(self.Speeds,0))
         while 1:
+            if (index > 21):
+                index = 0
+            elif (index == 1):
+                self.StrideIndex += 1
+                StrideTimer = time.perf_counter()
+                PhaseTimer = time.perf_counter()
+            elif (index == 11):
+                PhaseTimer = time.perf_counter()
+                
             self.SetServoVelocity(self.Speeds[index])
             self.MoveServo(self.Positions[index])
             
@@ -1010,14 +1021,6 @@ class Servo:
             if (stopVal == 1):
                 print("\nFinishing Movement.\n")
                 break
-            if (index > 21):
-                index = 0
-            elif (index == 1):
-                self.StrideIndex += 1
-                StrideTimer = time.perf_counter()
-                PhaseTimer = time.perf_counter()
-            elif (index == 11):
-                PhaseTimer = time.perf_counter()
             while 1:
                 dxl_mov, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, ADDR_MOVING)
                 if dxl_comm_result != COMM_SUCCESS:
@@ -1027,7 +1030,7 @@ class Servo:
                 if dxl_mov == 1:
                     pass
                 else:
-                    dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_PRESENT_POSITION)
+                    dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, self.ID, ADDR_PRO_PRESENT_POSITION)
                     if dxl_comm_result != COMM_SUCCESS:
                         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
                     elif dxl_error != 0:
@@ -1100,7 +1103,7 @@ class Servo:
             print("Failed to open the port")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
 
         # Set port baudrate
         if self.portHandler.setBaudRate(BAUDRATE):
@@ -1109,7 +1112,7 @@ class Servo:
             print("Failed to change the baudrate")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
 
         # Trigger
         print("Press any key to reboot")
@@ -1174,7 +1177,7 @@ class Servo:
             print("Failed to open the port!")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
 
         # Set port baudrate
         if dynamixel.setBaudRate(port_num, BAUDRATE):
@@ -1183,7 +1186,7 @@ class Servo:
             print("Failed to change the baudrate!")
             print("Press any key to terminate...")
             getch()
-            quit()
+            return
 
 
         # Read present baudrate of the controller
@@ -1195,7 +1198,7 @@ class Servo:
         if dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION) != COMM_SUCCESS:
             print("Aborted")
             dynamixel.printTxRxResult(PROTOCOL_VERSION, dynamixel.getLastTxRxResult(port_num, PROTOCOL_VERSION))
-            quit()
+            return
         elif dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION) != 0:
             dynamixel.printRxPacketError(PROTOCOL_VERSION, dynamixel.getLastRxPacketError(port_num, PROTOCOL_VERSION))
 
@@ -1212,7 +1215,7 @@ class Servo:
         else:
             print("Failed to change the controller baudrate")
             getch()
-            quit()
+            return
 
         # Read Dynamixel baudnum
         dxl_baudnum_read = dynamixel.read1ByteTxRx(port_num, PROTOCOL_VERSION, self.ID, ADDR_PRO_BAUDRATE)
@@ -1238,7 +1241,7 @@ class Servo:
         else:
             print("Failed to change the controller baudrate")
             getch()
-            quit()
+            return
 
         time.sleep(0.2)
 
@@ -1307,6 +1310,8 @@ class Leg(Limb):
         self.DataArray3 = []
         self.DataArray4 = []
 
+        self.OnceOrCont = 0
+
     def ReadData(self,IndexIn,portHandler,packetHandler):
         # Initialize GroupSyncRead instace for Present Position
         groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
@@ -1315,7 +1320,7 @@ class Leg(Limb):
             dxl_addparam_result = groupSyncRead.addParam(h)
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncRead addparam failed" % h)
-                quit()
+                return
 
         PresentPositions = []
 
@@ -1324,7 +1329,7 @@ class Leg(Limb):
             dxl_getdata_result = groupSyncRead.isAvailable(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
             if dxl_getdata_result != True:
                 print("[ID:%03d] groupSyncRead getdata failed" % e)
-                quit()
+                return
 
             # Get Dynamixel present position value
             else:
@@ -1364,13 +1369,13 @@ class Leg(Limb):
             dxl_addparam_result = groupSyncWriteVEL.addParam(d.ID,FormattedVel)
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
-                quit()
+                return
 
             FormattedPos = self.GoalPosition[index]
             dxl_addparam_result = groupSyncWritePOS.addParam(d.ID,FormattedPos)
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
-                quit()
+                return
             index += 1
 
         # Syncwrite goal velocity
@@ -1460,7 +1465,7 @@ class Leg(Limb):
                     dxl_addparam_result = groupSyncRead.addParam(h)
                 if dxl_addparam_result != True:
                     print("[ID:%03d] groupSyncRead addparam failed" % h)
-                    quit()
+                    return
 
 
                 # Syncread present position
@@ -1480,7 +1485,8 @@ class Leg(Limb):
                     dxl_getdata_result = groupSyncRead.isAvailable(j, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
                     if dxl_getdata_result != True:
                         print("[ID:%03d] groupSyncRead getdata failed" % j)
-                        quit()
+
+                        return
 
 
 
@@ -1666,7 +1672,7 @@ def InitialSetup():
         print("Failed to open the port")
         print("Press any key to terminate...")
         getch()
-        quit()
+        return
 
 
     # Set port baudrate
@@ -1676,7 +1682,7 @@ def InitialSetup():
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
         getch()
-        quit()
+        return
 
     return portHandler, packetHandler
 
@@ -1801,6 +1807,9 @@ def DetermineSpeeds(tspan,positionsFile):
         for y in range(0, cols):
             if (speeds[x][y] > 1023):
                 speeds[x][y] = 1023
+    print("\nShape of Speeds")
+    print(np.shape(speeds))
+    print("\n")
     return speeds
 
 def PostProcessSpeeds(speeds):
@@ -1898,7 +1907,9 @@ def PostProcessSpeeds(speeds):
     FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
     HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
     TOT_VEL = np.concatenate((FL_VEL,HL_VEL),axis=1)
-    
+    print("\nShape of Vels")
+    print(np.shape(TOT_VEL))
+    print("\n")
     return TOT_VEL
 
 def PostProcessPositions():
@@ -2077,7 +2088,7 @@ def PingServos():
         print("Failed to open the port")
         print("Press any key to terminate...")
         getch()
-        quit()
+        return
 
 
     # Set port baudrate
@@ -2087,7 +2098,7 @@ def PingServos():
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
         getch()
-        quit()
+        return
 
     # Try to broadcast ping the Dynamixel
     dxl_data_list, dxl_comm_result = packetHandler.broadcastPing(portHandler)
@@ -2131,7 +2142,7 @@ def AssembleRobot(PositionsArray):
     dxl_data_list = PingServos()
     for dxl_id in dxl_data_list:
         print("[ID:%03d] Detected" % (dxl_id))
-        RelativeServo = Servo(dxl_id,PositionsArray[:][dxl_id])
+        RelativeServo = Servo(dxl_id,PositionsArray[:,dxl_id])
         ServoObjList.append(RelativeServo)
         ServoObjDict[dxl_id] = RelativeServo
 
@@ -2218,13 +2229,16 @@ def AssembleRobot(PositionsArray):
 
 def RunThreads(ObjToMove,portHandler,packetHandler,DataRecord,CurrentDoc):
     global stopVal
+    global t1
+    global t2
+    global thread_running
     t1 = Thread(target=ObjToMove.ContinuousMove,args=(portHandler,packetHandler,DataRecord,CurrentDoc))
     t2 = Thread(target=DetectStopInput)
-    #thread_running = True
+    thread_running = True
     t1.start()
     t2.start()
     t2.join()
-    #thread_running = False
+    thread_running = False
     stopVal = 0
 
 def PulsePin(PinNum):
