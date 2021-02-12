@@ -82,6 +82,7 @@ while 1:
             print(TotMatrix_speeds[:,desired_servo-1])
             ServoObjDict[desired_servo].Speeds = TotMatrix_speeds[:,desired_servo-1]
             print(np.size(ServoObjDict[desired_servo].Speeds,0))
+
             RunThreads(ServoObjDict[desired_servo],portHandler,packetHandler,False,CurrentDoc)
         else:
             print("That's not a recognized option, please try again.\n")
@@ -96,13 +97,17 @@ while 1:
         print("6: Neck")
         print("7: Tail\n")
         desired_servo_limb = int(input("Enter selection number here: "))
-        print("\n")
+        print("\n") 
         desired_movement = input("Would you like the limb to move One Time or Continuously?[o/c]: ")
         TotMatrix_speeds = SpeedMerge()
         for each_servo in TheoLimbDict[desired_servo_limb].ServoList:
+            each_servo.InitialSetup()
+            each_servo.ToggleTorque(1,portHandler,packetHandler)
             each_servo.Speeds = TotMatrix_speeds[:,each_servo.ID-1]
-        TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler)
-        
+        print("\nMoving Servo Home:\n")
+        print(TheoLimbDict[desired_servo_limb])
+        TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler,ReadOption=False)
+        print("\nFinished Moving\n")
         if (desired_movement.lower() == 'o'):
             desired_position = int(input("To what location index do you want the limb to move?: "))
             print("\n")

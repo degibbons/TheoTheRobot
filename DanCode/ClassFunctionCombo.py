@@ -1009,7 +1009,7 @@ class Servo:
                 PhaseTimer = time.perf_counter()
             elif (index == 11):
                 PhaseTimer = time.perf_counter()
-                
+
             self.SetServoVelocity(self.Speeds[index])
             self.MoveServo(self.Positions[index])
             
@@ -1020,7 +1020,7 @@ class Servo:
             #index += 1
             if (stopVal == 1):
                 print("\nFinishing Movement.\n")
-                break
+                return
             while 1:
                 dxl_mov, dxl_comm_result, dxl_error = packetHandler.read1ByteTxRx(portHandler, self.ID, ADDR_MOVING)
                 if dxl_comm_result != COMM_SUCCESS:
@@ -1350,6 +1350,8 @@ class Leg(Limb):
         groupSyncRead.clearParam()
 
     def MoveLimb(self,IndexIn,portHandler,packetHandler,ReadOption=True):
+
+        print("Entered Limb Move Function")
          # Initialize GroupSyncWrite instance
         groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
@@ -1365,6 +1367,9 @@ class Leg(Limb):
 
         index = 0
         for _ , d in self.ServoDict.items():
+            print(_)
+            print(d)
+            print(d.ID)
             FormattedVel = self.GoalVelocity[index]
             dxl_addparam_result = groupSyncWriteVEL.addParam(d.ID,FormattedVel)
             if dxl_addparam_result != True:
@@ -1376,20 +1381,23 @@ class Leg(Limb):
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
                 return
+                
             index += 1
 
         # Syncwrite goal velocity
+        print("Writing Velocity")
         dxl_comm_result = groupSyncWriteVEL.txPacket()
-        if dxl_comm_result != COMM_SUCCESS:
-            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-
-        # Syncwrite goal position
-        dxl_comm_result = groupSyncWritePOS.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
         # Clear syncwrite parameter storage
         groupSyncWriteVEL.clearParam()
+
+        print("Writing Position")
+        # Syncwrite goal position
+        dxl_comm_result = groupSyncWritePOS.txPacket()
+        if dxl_comm_result != COMM_SUCCESS:
+            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
         # Clear syncwrite parameter storage
         groupSyncWritePOS.clearParam()
@@ -1421,8 +1429,8 @@ class Leg(Limb):
             index += 1
             if (stopVal == 1):
                 print("\nFinishing Movement.\n")
-                break
-            if (index > 21):
+                return
+            if (index > 21): 
                 index = 0
             elif (index == 1):
                 self.StrideCount += 1
@@ -1567,10 +1575,10 @@ class Leg(Limb):
             self.GoalVelocity.append(b.Speeds[IndexIn])
             self.GoalPosition.append(b.Positions[IndexIn])
 
-        self.DataArray1 = [self.IDList[0],self.GoalPosition[0],self.PresentPositions[0],self.GoalVelocity[0],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
-        self.DataArray2 = [self.IDList[1],self.GoalPosition[1],self.PresentPositions[1],self.GoalVelocity[1],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
-        self.DataArray3 = [self.IDList[2],self.GoalPosition[2],self.PresentPositions[2],self.GoalVelocity[2],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
-        self.DataArray4 = [self.IDList[3],self.GoalPosition[3],self.PresentPositions[3],self.GoalVelocity[3],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        #self.DataArray1 = [self.IDList[0],self.GoalPosition[0],self.PresentPositions[0],self.GoalVelocity[0],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        #self.DataArray2 = [self.IDList[1],self.GoalPosition[1],self.PresentPositions[1],self.GoalVelocity[1],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        #self.DataArray3 = [self.IDList[2],self.GoalPosition[2],self.PresentPositions[2],self.GoalVelocity[2],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
+        #self.DataArray4 = [self.IDList[3],self.GoalPosition[3],self.PresentPositions[3],self.GoalVelocity[3],self.IsHome,self.FirstMovePosition,self.StrideIndex,self.Phase,self.PhaseTime,self.StrideTime,self.TotalTime]
 
     def __del__(self):
             pass        
