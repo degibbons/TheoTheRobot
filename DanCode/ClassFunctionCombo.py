@@ -1415,8 +1415,8 @@ class Leg(Limb):
     def ContinuousMove(self,portHandler,packetHandler,DataRecord,CurrentDoc):
         global stopVal
         # Initialize GroupSyncRead instace for Present Position
-        groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
-
+        groupSyncReadMOV = GroupSyncRead(portHandler, packetHandler, ADDR_MOVING, LEN_MOVING)
+        groupSyncReadPOS = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
         index = 1
         StartTime = time.perf_counter()
         firstMove = True
@@ -1440,15 +1440,16 @@ class Leg(Limb):
                 PhaseTimer = time.perf_counter()
             isStopped = [0] * len(self.ServoList)
             timeMarkers = [0] * len(self.ServoList)
+
             while 1:
                 # Syncread Moving Value
-                dxl_comm_result = groupSyncRead.txRxPacket()
+                dxl_comm_result = groupSyncReadMOV.txRxPacket()
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
                 for i,j in self.ServoDict.items():
                     # Get Dynamixel#1 present Moving value
-                    dxl_mov = groupSyncRead.getData(j, ADDR_MOVING, LEN_MOVING)
+                    dxl_mov = groupSyncReadMOV.getData(j, ADDR_MOVING, LEN_MOVING)
                     
                     if (dxl_mov == 0) and (isStopped[i-1] == 0):
                         timeMarkers[i-1] = time.perf_counter()
@@ -1470,53 +1471,40 @@ class Leg(Limb):
                     break
 
                 for h in self.IDList:
-                    dxl_addparam_result = groupSyncRead.addParam(h)
+                    dxl_addparam_result = groupSyncReadPOS.addParam(h)
                 if dxl_addparam_result != True:
                     print("[ID:%03d] groupSyncRead addparam failed" % h)
                     return
 
 
                 # Syncread present position
-                dxl_comm_result = groupSyncRead.txRxPacket()
-                if dxl_comm_result != COMM_SUCCESS:
-                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-
-                        # Syncread present position
-                dxl_comm_result = groupSyncRead.txRxPacket()
+                dxl_comm_result = groupSyncReadPOS.txRxPacket()
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
                 #time.sleep(PreferedDelay)
 
 
-                for j in  self.IDList:
-                    dxl_getdata_result = groupSyncRead.isAvailable(j, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                for j in self.IDList:
+                    dxl_getdata_result = groupSyncReadPOS.isAvailable(j, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
                     if dxl_getdata_result != True:
                         print("[ID:%03d] groupSyncRead getdata failed" % j)
-
                         return
 
-
-
-                #time.sleep(PreferedDelay)
-
                 # Get Dynamixel#1 present position value
-                dxl1_present_position = groupSyncRead.getData(self.IDList[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                dxl1_present_position = groupSyncReadPOS.getData(self.IDList[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-                #time.sleep(PreferedDelay)
 
                 # Get Dynamixel#2 present position value
-                dxl2_present_position = groupSyncRead.getData(self.IDList[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                dxl2_present_position = groupSyncReadPOS.getData(self.IDList[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-                #time.sleep(PreferedDelay)
 
                 # Get Dynamixel#3 present position value
-                dxl3_present_position = groupSyncRead.getData(self.IDList[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                dxl3_present_position = groupSyncReadPOS.getData(self.IDList[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-                #time.sleep(PreferedDelay)
 
                 # Get Dynamixel#4 present position value
-                dxl4_present_position = groupSyncRead.getData(self.IDList[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                dxl4_present_position = groupSyncReadPOS.getData(self.IDList[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
                 self.PresentPositions = [dxl1_present_position,dxl2_present_position,dxl3_present_position,dxl4_present_position]
 
