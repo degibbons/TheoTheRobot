@@ -125,7 +125,7 @@ while 1:
             while 1:
                 if getch() == chr(0x0D):
                     break
-            TheoLimbDict[desired_servo_limb].MoveLimb(desired_position,portHandler,packetHandler,RecordChoice)
+            TheoLimbDict[desired_servo_limb].MoveLimb(desired_position,portHandler,packetHandler,False,RecordChoice)
         elif (desired_movement.lower() == 'c'):
             print("\n")
             desired_record = str(input("Do you want to record the resulting data?(Y/n): "))

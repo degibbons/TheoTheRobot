@@ -43,7 +43,7 @@ class Servo:
 
         self.Positions = Positions
         self.Speeds = []
-        self.HomeSpeed = STRAIGHT_SPEED
+        self.HomeSpeed = HOME_SPEED
         self.IsHome = None
         self.Activated = 1 # Change this to zero if you don't want it to move
         self.FirstMovePosition = 0
@@ -1283,7 +1283,7 @@ class Limb:
         self.IsHome = None # Check all Servo Members to set this value
         self.FirstMovePosition = None # Check all Servo Members to set this value
         self.TotalTime = 0
-
+        self.HomeSpeed = HOME_SPEED
         self.GoalVelocity = []
         self.GoalPosition = []
         self.PresentPositions = []
@@ -1349,7 +1349,7 @@ class Leg(Limb):
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
 
-    def MoveLimb(self,IndexIn,portHandler,packetHandler,ReadOption=True):
+    def MoveLimb(self,IndexIn,portHandler,packetHandler,isHomeMovement,ReadOption=True):
 
         print("Entered Limb Move Function")
          # Initialize GroupSyncWrite instance
@@ -1367,10 +1367,9 @@ class Leg(Limb):
 
         index = 0
         for _ , d in self.ServoDict.items():
-            print(_)
-            print(d)
-            print(d.ID)
             FormattedVel = self.GoalVelocity[index]
+            if isHomeMovement == True:
+                FormattedVel = FormatSendData(self.HomeSpeed)
             dxl_addparam_result = groupSyncWriteVEL.addParam(d.ID,FormattedVel)
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % d.ID)
@@ -1408,7 +1407,7 @@ class Leg(Limb):
             pass
 
     def MoveHome(self,portHandler,packetHandler,ReadOption=False):
-        self.MoveLimb(0,portHandler,packetHandler,ReadOption)
+        self.MoveLimb(0,portHandler,packetHandler,True,ReadOption)
         self.IsHome = True
         print(f"Limb #{self.LimbNumber} Moved To Home Position\n")
 
@@ -1421,7 +1420,7 @@ class Leg(Limb):
         StartTime = time.perf_counter()
         firstMove = True
         while 1:
-            self.MoveLimb(index,portHandler,packetHandler,ReadOption=True)
+            self.MoveLimb(index,portHandler,packetHandler,False,ReadOption=True)
             if (firstMove == True):
                 StrideTimer = time.perf_counter()
                 PhaseTimer = time.perf_counter()
