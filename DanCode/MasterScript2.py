@@ -10,6 +10,7 @@ import numpy as np
 import time
 from ClassFunctionCombo import *
 from ControlTable import *
+import pandas as pd
 #from RelevantFunctions import *
 from dynamixel_sdk import *
 from threading import Thread
@@ -31,6 +32,10 @@ else:
         return ch
 
 [portHandler, packetHandler] = InitialSetup()              # Uses Dynamixel SDK library
+
+
+(FL_TOT_R_1, FL_TOT_R_2, FL_TOT_R_3, FL_TOT_R_4, FL_TOT_L_1, FL_TOT_L_2, FL_TOT_L_3, FL_TOT_L_4,
+ HL_TOT_R_1, HL_TOT_R_2, HL_TOT_R_3, HL_TOT_R_4, HL_TOT_L_1, HL_TOT_L_2, HL_TOT_L_3, HL_TOT_L_4) = ReadServoAngles(positionsFile)
 
 [FrontPositions, BackPositions] = PostProcessPositions()
 PositionsArray = np.concatenate((FrontPositions,BackPositions),axis=1)

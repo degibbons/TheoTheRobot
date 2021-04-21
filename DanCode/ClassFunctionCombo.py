@@ -2,14 +2,18 @@ import os
 from ControlTable import *
 from dynamixel_sdk import *
 import numpy as np
+import pandas as pd
 import copy as cp
 import time
 from curtsies import Input
 from threading import Thread
 import RPi.GPIO as GPIO
+import math
+import sys
 #import dynamixel_functions as dynamixel  
 import csv
 
+global stopVal
 stopVal = 0
 global t1
 global t2
@@ -1188,7 +1192,6 @@ class Servo:
             getch()
             return
 
-
         # Read present baudrate of the controller
         print("Now the controller baudrate is : %d" % (dynamixel.getBaudRate(port_num)))
 
@@ -1336,15 +1339,15 @@ class Leg(Limb):
                 dxl_present_position = groupSyncRead.getData(e, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
                 PresentPositions.append(dxl_present_position)
 
-        print("======================================================================")
-        GetIndexString = f"Stride #{self.StrideCount}, Movement #{IndexIn}"
-        print(GetIndexString)
-        for f,g in self.ServoDict.items():
-            GetPosString = "[ID:%03d] GoalPos:%03d  PresPos:%03d" % (g, self.GoalPosition[f-1], PresentPositions[f-1])
-            GetVelString = "[ID:%03d] Velocity Given:%03d" % (g, self.GoalVelocity[f-1])
-            print(GetPosString)
-            print(GetVelString)
-        print("======================================================================")
+        # print("======================================================================")
+        # GetIndexString = f"Stride #{self.StrideCount}, Movement #{IndexIn}"
+        # print(GetIndexString)
+        # for f,g in self.ServoDict.items():
+        #     GetPosString = "[ID:%03d] GoalPos:%03d  PresPos:%03d" % (g, self.GoalPosition[f-1], PresentPositions[f-1])
+        #     GetVelString = "[ID:%03d] Velocity Given:%03d" % (g, self.GoalVelocity[f-1])
+        #     print(GetPosString)
+        #     print(GetVelString)
+        # print("======================================================================")
         
         # Clear syncread parameter storage
         groupSyncRead.clearParam()
@@ -1401,111 +1404,129 @@ class Leg(Limb):
         # Clear syncwrite parameter storage
         groupSyncWritePOS.clearParam()
 
-        if (ReadOption == True):
-            self.ReadData(IndexIn,portHandler,packetHandler)
-        else:
-            pass
+        # if (ReadOption == True):
+        #     self.ReadData(IndexIn,portHandler,packetHandler)
+        # else:
+        #     pass
 
     def MoveHome(self,portHandler,packetHandler,ReadOption=False):
         self.MoveLimb(0,portHandler,packetHandler,True,ReadOption)
         self.IsHome = True
+        for i in self.IDList:
+            print(i)
         print(f"Limb #{self.LimbNumber} Moved To Home Position\n")
 
     def ContinuousMove(self,portHandler,packetHandler,DataRecord,CurrentDoc):
         global stopVal
         # Initialize GroupSyncRead instace for Present Position
         groupSyncReadMOV = GroupSyncRead(portHandler, packetHandler, ADDR_MOVING, LEN_MOVING)
-        groupSyncReadPOS = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
+        #groupSyncReadPOS = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
         index = 1
-        StartTime = time.perf_counter()
-        firstMove = True
+        # StartTime = time.perf_counter()
+        # firstMove = True
         while 1:
             self.MoveLimb(index,portHandler,packetHandler,False,ReadOption=True)
-            if (firstMove == True):
-                StrideTimer = time.perf_counter()
-                PhaseTimer = time.perf_counter()
-                firstMove == False
+            # if (firstMove == True):
+            #     StrideTimer = time.perf_counter()
+            #     PhaseTimer = time.perf_counter()
+            #     firstMove == False
+            print("Index Movement is: {ind}".format(ind = index))
             index += 1
-            if (stopVal == 1):
-                print("\nFinishing Movement.\n")
-                return
+            
             if (index > 21): 
                 index = 0
             elif (index == 1):
+                print("Stride Number: {sn}".format(sn=self.StrideCount))
                 self.StrideCount += 1
-                StrideTimer = time.perf_counter()
-                PhaseTimer = time.perf_counter()
+                # StrideTimer = time.perf_counter()
+                # PhaseTimer = time.perf_counter()
             elif (index == 11):
-                PhaseTimer = time.perf_counter()
+                #PhaseTimer = time.perf_counter()
+                pass
             isStopped = [0] * len(self.ServoList)
-            timeMarkers = [0] * len(self.ServoList)
-
+            # timeMarkers = [0] * len(self.ServoList)
+            for i in self.IDList:
+                groupSyncReadMOV.addParam(i)
             while 1:
                 # Syncread Moving Value
+                print("Running Read Loop")
                 dxl_comm_result = groupSyncReadMOV.txRxPacket()
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-
-                for i,j in self.ServoDict.items():
+                if (stopVal == 1):
+                    print("\nFinishing All Movement.\n")
+                    return
+                j = 0
+                for i in self.IDList:
                     # Get Dynamixel#1 present Moving value
-                    dxl_mov = groupSyncReadMOV.getData(j, ADDR_MOVING, LEN_MOVING)
-                    
+                    dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)
+                    print(dxl_mov)                   
                     if (dxl_mov == 0) and (isStopped[i-1] == 0):
-                        timeMarkers[i-1] = time.perf_counter()
+                        #timeMarkers[i-1] = time.perf_counter()
                         isStopped[i-1] = 1
                     #self.PresentPositions[i-1] = 
+                    j += 1
+                print('isStopped = {}-{}-{}-{}'.format(isStopped[0],isStopped[1],isStopped[2],isStopped[3]))
+
 
                 if 0 in isStopped:
-                    pass
+                    print("Not done moving")
                 else:
-                    self.UpdatePhase(index)
-                    self.UpdateTimeValues(index-1,StartTime,StrideTimer,PhaseTimer)
-                    self.UpdateOtherValues(index)
+                    # self.UpdatePhase(index)
+                    # self.UpdateTimeValues(index-1,StartTime,StrideTimer,PhaseTimer)
+                    # self.UpdateOtherValues(index)
                     # PRINT INFORMATION TO DOCUMENT HERE USING TIMEMARKERS LIST
                     if DataRecord == True: 
                         CurrentDoc.WriteToDoc(self.DataArray1)
                         CurrentDoc.WriteToDoc(self.DataArray2)
                         CurrentDoc.WriteToDoc(self.DataArray3)
                         CurrentDoc.WriteToDoc(self.DataArray4)
+                    print("Breaking out of check loop")
                     break
 
-                for h in self.IDList:
-                    dxl_addparam_result = groupSyncReadPOS.addParam(h)
-                if dxl_addparam_result != True:
-                    print("[ID:%03d] groupSyncRead addparam failed" % h)
-                    return
+                # for h in self.IDList:
+                #     dxl_addparam_result = groupSyncReadPOS.addParam(h)
+                #     if dxl_addparam_result != True:
+                #         print("[ID:%03d] groupSyncRead addparam failed" % h)
+                #         return
 
 
-                # Syncread present position
-                dxl_comm_result = groupSyncReadPOS.txRxPacket()
-                if dxl_comm_result != COMM_SUCCESS:
-                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                # # Syncread present position
+                # dxl_comm_result = groupSyncReadPOS.txRxPacket()
+                # if dxl_comm_result != COMM_SUCCESS:
+                #     print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
-                #time.sleep(PreferedDelay)
-
-
-                for j in self.IDList:
-                    dxl_getdata_result = groupSyncReadPOS.isAvailable(j, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
-                    if dxl_getdata_result != True:
-                        print("[ID:%03d] groupSyncRead getdata failed" % j)
-                        return
-
-                # Get Dynamixel#1 present position value
-                dxl1_present_position = groupSyncReadPOS.getData(self.IDList[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                # #time.sleep(PreferedDelay)
 
 
-                # Get Dynamixel#2 present position value
-                dxl2_present_position = groupSyncReadPOS.getData(self.IDList[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                # for j in self.IDList:
+                #     dxl_getdata_result = groupSyncReadPOS.isAvailable(j, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                #     if dxl_getdata_result != True:
+                #         print("[ID:%03d] groupSyncRead getdata failed" % j)
+                #         return
+
+                # # Get Dynamixel#1 present position value
+                # dxl1_present_position = groupSyncReadPOS.getData(self.IDList[0], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
 
-                # Get Dynamixel#3 present position value
-                dxl3_present_position = groupSyncReadPOS.getData(self.IDList[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                # # Get Dynamixel#2 present position value
+                # dxl2_present_position = groupSyncReadPOS.getData(self.IDList[1], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
 
-                # Get Dynamixel#4 present position value
-                dxl4_present_position = groupSyncReadPOS.getData(self.IDList[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+                # # Get Dynamixel#3 present position value
+                # dxl3_present_position = groupSyncReadPOS.getData(self.IDList[2], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 
-                self.PresentPositions = [dxl1_present_position,dxl2_present_position,dxl3_present_position,dxl4_present_position]
+
+                # # Get Dynamixel#4 present position value
+                # dxl4_present_position = groupSyncReadPOS.getData(self.IDList[3], ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
+
+                # self.PresentPositions = [dxl1_present_position,dxl2_present_position,dxl3_present_position,dxl4_present_position]
+                # print("################################################")
+                # print("Servo 1 pos: {n}".format(n=self.PresentPositions[0]))
+                # print("Servo 2 pos: {n}".format(n=self.PresentPositions[1]))
+                # print("Servo 3 pos: {n}".format(n=self.PresentPositions[2]))
+                # print("Servo 4 pos: {n}".format(n=self.PresentPositions[3]))
+                # print("################################################")
 
 
     def UpdatePhase(self,IndexIn):
@@ -1666,7 +1687,7 @@ def InitialSetup():
     else:
         print("Failed to open the port")
         print("Press any key to terminate...")
-        getch()
+        getch() # pylint: disable=undefined-variable
         return
 
 
@@ -1676,7 +1697,7 @@ def InitialSetup():
     else:
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
-        getch()
+        getch() # pylint: disable=undefined-variable
         return
 
     return portHandler, packetHandler
@@ -1715,21 +1736,15 @@ def FormatSendData(rawData):
     return [DXL_LOBYTE(DXL_LOWORD(rawData)), DXL_HIBYTE(DXL_LOWORD(rawData)), DXL_LOBYTE(DXL_HIWORD(rawData)), DXL_HIBYTE(DXL_HIWORD(rawData))]
 
 def DetectStopInput():
+    global stopVal
     with Input(keynames='curses') as input_generator:
         for e in input_generator:
             if (str(e) == '\x1b'):
                 print("Stopping Servo Movement\n")
-                global stopVal
                 stopVal = 1
                 break
 
 def DetermineSpeeds(tspan,positionsFile):
-    import numpy as np
-    import pandas as pd
-    import math
-    import time
-    import copy as cp
-    import sys
     #Import position points as a data frame (df)
     old_df = pd.read_csv(positionsFile)
     old_df = old_df.values[:][:]
@@ -1744,10 +1759,9 @@ def DetermineSpeeds(tspan,positionsFile):
     f_st_per = f_stance / 8.24
     f_sw_per = f_swing / 8.24
     b = speeds.shape
-    cLen = b[0]
-    cLength = cLen/2
+    cLength = b[0]
     cWidth = b[1]
-    percents = np.linspace(1,cLen-1,cLen-1)
+    percents = np.linspace(1,cLength-1,cLength-1)
     joints = list(range(1,cWidth+1))
     percents = percents.astype(int).tolist()
     for i in percents:
@@ -1756,22 +1770,22 @@ def DetermineSpeeds(tspan,positionsFile):
                 rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*f_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed,5)
+                speeds[i-1][j-1] = round(movementSpeed)
             elif (j == 5 or j == 6 or j == 7 or j == 8): 
                 rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*f_sw_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed,5)
+                speeds[i-1][j-1] = round(movementSpeed)
             elif (j == 9 or j == 10 or j == 11 or j == 12 ):
                 rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*h_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed,5)
+                speeds[i-1][j-1] = round(movementSpeed)
             elif (j == 13 or j == 14 or j == 15 or j == 16 ):
                 rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*h_sw_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed,5)
+                speeds[i-1][j-1] = round(movementSpeed)
     speeds = np.round(speeds)
     joints = list(range(0,cWidth))
     for j in joints:
@@ -1795,13 +1809,14 @@ def DetermineSpeeds(tspan,positionsFile):
             movementTime = (tspan * h_sw_per / cLength) / 60
             movementSpeed = (rotations / movementTime) / 0.114
             speeds[-1][j] = round(movementSpeed)
-    speeds[speeds==0]=1
     rows = speeds.shape[0]
     cols = speeds.shape[1]
     for x in range(0, rows):
         for y in range(0, cols):
             if (speeds[x][y] > 1023):
                 speeds[x][y] = 1023
+            elif (speeds[x][y] == 0):
+                speeds[x][y] = 1
     print("\nShape of Speeds")
     print(np.shape(speeds))
     print("\n")
@@ -1906,6 +1921,156 @@ def PostProcessSpeeds(speeds):
     print(np.shape(TOT_VEL))
     print("\n")
     return TOT_VEL
+
+def ReadServoAngles(positionsFile):
+
+    old_df = pd.read_csv(positionsFile)
+    old_df = old_df.values[:][:]
+
+    FL_ST_R_1 = old_df[:,0]
+    FL_ST_R_2 = old_df[:,1]
+    FL_ST_R_3 = old_df[:,2]
+    FL_ST_R_4 = old_df[:,3]
+
+    FL_SW_R_1 = old_df[:,4]
+    FL_SW_R_2 = old_df[:,5]
+    FL_SW_R_3 = old_df[:,6]
+    FL_SW_R_4 = old_df[:,7]
+
+    FL_TOT_R_1 = np.concatenate((FL_ST_R_1, FL_SW_R_1),axis=0)
+    FL_TOT_R_2 = np.concatenate((FL_ST_R_2, FL_SW_R_2),axis=0)
+    FL_TOT_R_3 = np.concatenate((FL_ST_R_3, FL_SW_R_3),axis=0)
+    FL_TOT_R_4 = np.concatenate((FL_ST_R_4, FL_SW_R_4),axis=0)
+
+    FL_ST_L_1 = old_df[:,0]
+    FL_ST_L_2 = old_df[:,1]
+    FL_ST_L_3 = old_df[:,2]
+    FL_ST_L_4 = old_df[:,3]
+
+    FL_SW_L_1 = old_df[:,4]
+    FL_SW_L_2 = old_df[:,5]
+    FL_SW_L_3 = old_df[:,6]
+    FL_SW_L_4 = old_df[:,7]
+
+    FL_TOT_L_1 = np.concatenate((FL_ST_L_1, FL_SW_L_1),axis=0)
+    FL_TOT_L_2 = np.concatenate((FL_ST_L_2, FL_SW_L_2),axis=0)
+    FL_TOT_L_3 = np.concatenate((FL_ST_L_3, FL_SW_L_3),axis=0)
+    FL_TOT_L_4 = np.concatenate((FL_ST_L_4, FL_SW_L_4),axis=0)
+
+    HL_ST_R_1 = old_df[:,8]
+    HL_ST_R_2 = old_df[:,9]
+    HL_ST_R_3 = old_df[:,10]
+    HL_ST_R_4 = old_df[:,11]
+
+    HL_SW_R_1 = old_df[:,12]
+    HL_SW_R_2 = old_df[:,13]
+    HL_SW_R_3 = old_df[:,14]
+    HL_SW_R_4 = old_df[:,15]
+
+    HL_TOT_R_1 = np.concatenate((HL_ST_R_1, HL_SW_R_1),axis=0)
+    HL_TOT_R_2 = np.concatenate((HL_ST_R_2, HL_SW_R_2),axis=0)
+    HL_TOT_R_3 = np.concatenate((HL_ST_R_3, HL_SW_R_3),axis=0)
+    HL_TOT_R_4 = np.concatenate((HL_ST_R_4, HL_SW_R_4),axis=0)
+
+    HL_ST_L_1 = old_df[:,8]
+    HL_ST_L_2 = old_df[:,9]
+    HL_ST_L_3 = old_df[:,10]
+    HL_ST_L_4 = old_df[:,11]
+
+    HL_SW_L_1 = old_df[:,12]
+    HL_SW_L_2 = old_df[:,13]
+    HL_SW_L_3 = old_df[:,14]
+    HL_SW_L_4 = old_df[:,15]
+
+    HL_TOT_L_1 = np.concatenate((HL_ST_L_1, HL_SW_L_1),axis=0)
+    HL_TOT_L_2 = np.concatenate((HL_ST_L_2, HL_SW_L_2),axis=0)
+    HL_TOT_L_3 = np.concatenate((HL_ST_L_3, HL_SW_L_3),axis=0)
+    HL_TOT_L_4 = np.concatenate((HL_ST_L_4, HL_SW_L_4),axis=0)
+
+    dyn_con = 4096/360
+
+    j = 0
+    for i in FL_TOT_R_1:
+        FL_TOT_R_1[j] = 2048 - (i * dyn_con)
+        j += 1
+    FL_TOT_R_1 = FL_TOT_R_1.round().tolist()
+    j = 0
+    for i in FL_TOT_R_2:
+        FL_TOT_R_2[j] = 2048 + (i * dyn_con)
+        j += 1
+    FL_TOT_R_2 = FL_TOT_R_2.round().tolist()
+    j = 0
+    for i in FL_TOT_R_3:
+        FL_TOT_R_3[j] = 2048 + (i * dyn_con)
+        j += 1
+    FL_TOT_R_3 = FL_TOT_R_3.round().tolist()
+    j = 0
+    for i in FL_TOT_R_4:
+        FL_TOT_R_4[j] = 2048 + (i * dyn_con)
+        j += 1
+    FL_TOT_R_4 = FL_TOT_R_4.round().tolist()
+    j = 0
+    for i in FL_TOT_L_1:
+        FL_TOT_L_1[j] = 2048 - (-1 * i * dyn_con)
+        j += 1
+    FL_TOT_L_1 = FL_TOT_L_1.round().tolist()
+    j = 0
+    for i in FL_TOT_L_2:
+        FL_TOT_L_1[j] = 2048 + (i * dyn_con)
+        j += 1
+    FL_TOT_L_2 = FL_TOT_L_2.round().tolist()
+    j = 0
+    for i in FL_TOT_L_3:
+        FL_TOT_L_3[j] = 2048 + (-1 * i * dyn_con)
+        j += 1
+    FL_TOT_L_3 = FL_TOT_L_3.round().tolist()
+    j = 0
+    for i in FL_TOT_L_4:
+        FL_TOT_L_4[j] = 2048 + (i * dyn_con)
+        j += 1
+    FL_TOT_L_4 = FL_TOT_L_4.round().tolist()
+    j = 0
+    for i in HL_TOT_R_1:
+        HL_TOT_R_1[j] = 2048 - (i * dyn_con)
+        j += 1
+    HL_TOT_R_1 = HL_TOT_R_1.round().tolist()
+    j = 0
+    for i in HL_TOT_R_2:
+        HL_TOT_R_2[j] = 2048 + (i * dyn_con)
+        j += 1
+    HL_TOT_R_2 = HL_TOT_R_2.round().tolist()
+    j = 0
+    for i in HL_TOT_R_3:
+        HL_TOT_R_3[j] = 2048 + (i * dyn_con)
+        j += 1
+    HL_TOT_R_3 = HL_TOT_R_3.round().tolist()
+    j = 0
+    for i in HL_TOT_R_4:
+        HL_TOT_R_4[j] = 2048 + (i * dyn_con)
+        j += 1
+    HL_TOT_R_4 = HL_TOT_R_4.round().tolist()
+    j = 0
+    for i in HL_TOT_L_1:
+        HL_TOT_L_1[j] = 2048 - (-1 * i * dyn_con)
+        j += 1
+    HL_TOT_L_1 = HL_TOT_L_1.round().tolist()
+    j = 0
+    for i in HL_TOT_L_2:
+        HL_TOT_L_2[j] = 2048 + (i * dyn_con)
+        j += 1
+    HL_TOT_L_2 = HL_TOT_L_2.round().tolist()
+    j = 0
+    for i in HL_TOT_L_3:
+        HL_TOT_L_3[j] = 2048 + (-1 * i * dyn_con)
+        j += 1
+    HL_TOT_L_3 = HL_TOT_L_3.round().tolist()
+    j = 0
+    for i in HL_TOT_L_4:
+        HL_TOT_L_4[j] = 2048 + (i * dyn_con)
+        j += 1
+    HL_TOT_L_4 = HL_TOT_L_4.round().tolist()
+
+    return FL_TOT_R_1, FL_TOT_R_2, FL_TOT_R_3, FL_TOT_R_4, FL_TOT_L_1, FL_TOT_L_2, FL_TOT_L_3, FL_TOT_L_4, HL_TOT_R_1, HL_TOT_R_2, HL_TOT_R_3, HL_TOT_R_4, HL_TOT_L_1, HL_TOT_L_2, HL_TOT_L_3, HL_TOT_L_4
 
 def PostProcessPositions():
     ServoPos1 = RotatePositionArray(FL_TOT_R_1,1,len(FL_TOT_R_1))
@@ -2056,7 +2221,7 @@ def PingServos():
         def getch():
             return msvcrt.getch().decode()
     else:
-        import sys, tty, termios
+        import sys, tty, termios 
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         def getch():
@@ -2181,6 +2346,8 @@ def AssembleRobot(PositionsArray):
             TheoLimbList.append(FR_Leg)
             TheoLimbDict[1] = FR_Leg
             print("Front Right Limb is Digitally Assembled.")
+            for i in FR_Leg.IDList:
+                print(i)
         if (FL_limbCount == 4):
             FL_Limb = [ServoObjDict[5],ServoObjDict[6],ServoObjDict[7],ServoObjDict[8]]
             FL_Leg = Leg(2,FL_Limb)
