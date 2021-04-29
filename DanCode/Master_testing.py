@@ -39,11 +39,11 @@ while 1:
     desired_action = int(input("Run Test Protocol?(1) or Shutdown Sequence?(2):"))
     if (desired_action == 1):
         print("Running Auto Continuous Move Protocol...\n")
-        matrix_speeds = SpeedMerge()
+        matrix_speeds = SpeedMerge(PositionsMatrix)
         for each_servo in TheoLimbDict[desired_servo_limb].ServoList:
             each_servo.InitialSetup()
             each_servo.ToggleTorque(1,portHandler,packetHandler)
-            each_servo.Speeds = matrix_speeds[:,each_servo.ID-1]
+            each_servo.Speeds = matrix_speeds[:][each_servo.ID-1]
         print("\nMoving Limb #{s_l} Home:\n".format(s_l=TheoLimbDict[desired_servo_limb]))
         TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler)
         print("\nFinished Moving\n")

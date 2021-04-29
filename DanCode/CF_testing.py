@@ -441,10 +441,15 @@ class Leg(Limb):
 
         self.GoalVelocity = []
         self.GoalPosition = []
-
+        P_IndexIn = IndexIn
+        if (IndexIn == 0):
+            S_IndexIn = 21
+        else:
+            S_IndexIn = IndexIn-1
+              
         for b in self.ServoList:
-            self.GoalVelocity.append(FormatSendData(int(b.Speeds[IndexIn])))
-            self.GoalPosition.append(FormatSendData(b.Positions[IndexIn]))
+            self.GoalVelocity.append(FormatSendData(int(b.Speeds[S_IndexIn])))
+            self.GoalPosition.append(FormatSendData(b.Positions[P_IndexIn]))
 
         index = 0
         for _ , d in self.ServoDict.items():
@@ -490,49 +495,68 @@ class Leg(Limb):
             print("Moving Servo#{sn} home. ".format(sn=i))
         print(f"Limb #{self.LimbNumber} Moved To Home Position\n")
 
-    def ContinuousMove(self,portHandler,packetHandle):
+    def ContinuousMove(self,portHandler,packetHandler):
         global stopVal
         # Initialize GroupSyncRead instace for Present Position
         groupSyncReadMOV = GroupSyncRead(portHandler, packetHandler, ADDR_MOVING, LEN_MOVING)
         index = 1
-        while 1:
-            self.MoveLimb(index,portHandler,packetHandler,False)
-            print("Index Movement is: {ind}".format(ind = index))
-            index += 1
-            if (index > 21): 
-                index = 0
-            elif (index == 1):
-                print("Stride Number: {sn}".format(sn=self.StrideCount))
-                self.StrideCount += 1
-            isStopped = [0] * len(self.ServoList)
-            for i in self.IDList:
-                groupSyncReadMOV.addParam(i)
-            while 1:
-                # Syncread Moving Value
-                print("Running Read Loop")
-                dxl_comm_result = groupSyncReadMOV.txRxPacket()
-                if dxl_comm_result != COMM_SUCCESS:
-                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-                if (stopVal == 1):
-                    print("\nFinishing All Movement.\n")
-                    return
-                j = 0
-                for i in self.IDList:
-                    # Get Dynamixel#1 present Moving value
-                    dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)
-                    print("dxl_mov for #{ser_name} is {dxl_mov}: ".format(dxl_mov = dxl_mov,ser_name = i) )                   
-                    if (dxl_mov == 0) and (isStopped[i-1] == 0):
-                        isStopped[i-1] = 1
-                    j += 1
-                print('isStopped = {}-{}-{}-{}'.format(isStopped[0],isStopped[1],isStopped[2],isStopped[3]))
-
-
-                if 0 in isStopped:
-                    print("Not done moving")
+        with open('SpeedPosMatching.csv', 'a', newline='') as csvfile:
+            DocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
+            for x in range(0,51):
+                self.MoveLimb(index,portHandler,packetHandler,False)
+                if (index == 0):
+                    S_IndexIn = 21
                 else:
-                    print("Breaking out of check loop\n")
-                    break
-        
+                    S_IndexIn = index-1
+                P_IndexIn = index
+                PositionList = []
+                SpeedList = []
+                for b in self.ServoList:
+                    Pos_num = b.Positions[P_IndexIn]
+                    Sp_num = int(b.Speeds[S_IndexIn])
+                    PositionList.append(Pos_num)
+                    SpeedList.append(Sp_num)
+                CombinedList = list(zip(PositionList,SpeedList))
+                print("Index Movement is: {ind}".format(ind = index))
+                index += 1
+                if (index > 21): 
+                    index = 0
+                elif (index == 1):
+                    print("Stride Number: {sn}".format(sn=self.StrideCount))
+                    self.StrideCount += 1
+                isStopped = [0] * len(self.ServoList)
+                for i in self.IDList:
+                    groupSyncReadMOV.addParam(i)
+                while 1:
+                    # Syncread Moving Value
+                    print("Running Read Loop")
+                    dxl_comm_result = groupSyncReadMOV.txRxPacket()
+                    if dxl_comm_result != COMM_SUCCESS:
+                        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                    if (stopVal == 1):
+                        print("\nFinishing All Movement.\n")
+                        return
+                    j = 0
+                    for i in self.IDList:
+                        # Get Dynamixel#1 present Moving value
+                        dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)
+                        print("dxl_mov for #{ser_name} is {dxl_mov}: ".format(dxl_mov = dxl_mov,ser_name = i) )                   
+                        if (dxl_mov == 0) and (isStopped[i-1] == 0):
+                            isStopped[i-1] = 1
+                        j += 1
+                    print('isStopped = {}-{}-{}-{}'.format(isStopped[0],isStopped[1],isStopped[2],isStopped[3]))
+
+
+                    if 0 in isStopped:
+                        print("Not done moving")
+                    else:
+                        
+                        print("Breaking out of check loop\n")
+                        DocWriter.writerow(CombinedList)
+                        break
+                groupSyncReadMOV.clearParam()
+        print("Done Writing! Please Hit Esc.\n\n")
+
     def UpdateOtherValues(self,IndexIn):
         self.GoalVelocity = []
         self.GoalPosition = []
@@ -616,7 +640,7 @@ def gcd(a, b):
         return a 
     else: 
         return gcd(b, a%b) 
-   
+
 def RotatePositionArray(inArray,shiftNum,arrayLength):
     for i in range(gcd(shiftNum,arrayLength)):  
         temp = inArray[i] 
@@ -653,12 +677,12 @@ def DetectStopInput():
                 stopVal = 1
                 break
 
-def DetermineSpeeds(tspan,positionsFile):
+def DetermineSpeeds(tspan,PositionsMatrix):
     #Import position points as a data frame (df)
-    old_df = pd.read_csv(positionsFile)
-    old_df = old_df.values[:][:]
+    #old_df = pd.read_csv(positionsFile)
+    #old_df = old_df.values[:][:]
     #Make a copy of the dataframe with the same dimensions for the speeds
-    speeds = cp.copy(old_df)
+    speeds = cp.copy(PositionsMatrix)
     h_stance = 4.892994
     h_swing = 3.347006
     f_stance = 5.211718
@@ -667,149 +691,138 @@ def DetermineSpeeds(tspan,positionsFile):
     h_sw_per = h_swing / 8.24
     f_st_per = f_stance / 8.24
     f_sw_per = f_swing / 8.24
+    speeds = np.array(speeds)
     b = speeds.shape
-    cLength = b[0]
-    cWidth = b[1]
-    percents = np.linspace(1,cLength-1,cLength-1)
-    joints = list(range(1,cWidth+1))
-    percents = percents.astype(int).tolist()
-    for i in percents:
-        for j in joints: 
-            if (j == 1 or j == 2 or j == 3 or j == 4 ):
-                rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
+    cLength = int(b[1]/2)
+    cWidth = int(b[0])
+    MoveIndex = np.linspace(1,int(b[1]),int(b[1]))
+    servos = list(range(1,cWidth+1))
+    MoveIndex = MoveIndex.astype(int).tolist()
+    newSpeeds = []
+    #t1 = np.zeros(b[1])
+    for i in np.linspace(1,cWidth,cWidth):
+        newSpeeds.append(np.zeros(b[1]))
+    for i in servos:
+        for j in MoveIndex: 
+            if (i == 1 or i == 2 or i == 3 or i == 4 ):
+                if (j==b[1]):
+                    rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
+                else:
+                    rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*f_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed)
-            elif (j == 5 or j == 6 or j == 7 or j == 8): 
-                rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
+                newSpeeds[i-1][j-1] = round(movementSpeed)
+            elif (i == 5 or i == 6 or i == 7 or i == 8): 
+                if (j==b[1]):
+                    rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
+                else:
+                    rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*f_sw_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed)
-            elif (j == 9 or j == 10 or j == 11 or j == 12 ):
-                rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
+                newSpeeds[i-1][j-1] = round(movementSpeed)
+            elif (i == 9 or i == 10 or i == 11 or i == 12 ):
+                if (j==b[1]):
+                    rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
+                else:
+                    rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*h_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed)
-            elif (j == 13 or j == 14 or j == 15 or j == 16 ):
-                rotations = abs(speeds[i][j-1]-speeds[i-1][j-1])/4096
+                newSpeeds[i-1][j-1] = round(movementSpeed)
+            elif (i == 13 or i == 14 or i == 15 or i == 16 ):
+                if (j==b[1]):
+                    rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
+                else:
+                    rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
                 movementTime = (tspan*h_sw_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
-                speeds[i-1][j-1] = round(movementSpeed)
-    speeds = np.round(speeds)
-    joints = list(range(0,cWidth))
-    for j in joints:
-        if (j == 0 or j == 1 or j == 2 or j == 3):
-            rotations = abs(old_df[-1][j] - old_df[0][j+4])/4096
-            movementTime = (tspan * f_st_per / cLength) / 60
-            movementSpeed = (rotations / movementTime) / 0.114
-            speeds[-1][j] = round(movementSpeed)
-        elif (j == 4 or j == 5 or j == 6 or j == 7):
-            rotations = abs(old_df[-1][j] - old_df[0][j-4])/4096
-            movementTime = (tspan * f_sw_per / cLength) / 60
-            movementSpeed = (rotations / movementTime) / 0.114
-            speeds[-1][j] = round(movementSpeed)
-        elif (j == 8 or j == 9 or j == 10 or j == 11):
-            rotations = abs(old_df[-1][j] - old_df[0][j+4])/4096
-            movementTime = (tspan * h_st_per / cLength) / 60
-            movementSpeed = (rotations / movementTime) / 0.114
-            speeds[-1][j] = round(movementSpeed)
-        elif (j == 12 or j == 13 or j == 14 or j == 15):
-            rotations = abs(old_df[-1][j] - old_df[0][j-4])/4096
-            movementTime = (tspan * h_sw_per / cLength) / 60
-            movementSpeed = (rotations / movementTime) / 0.114
-            speeds[-1][j] = round(movementSpeed)
-    rows = speeds.shape[0]
-    cols = speeds.shape[1]
-    for x in range(0, rows):
-        for y in range(0, cols):
-            if (speeds[x][y] > 1023):
-                speeds[x][y] = 1023
-            elif (speeds[x][y] == 0):
-                speeds[x][y] = 1
-    print("\nShape of Speeds")
-    print(np.shape(speeds))
-    print("\n")
-    return speeds
+                newSpeeds[i-1][j-1] = round(movementSpeed)
+    for i in servos:
+        newSpeeds[i-1] = newSpeeds[i-1].astype(int)
+    for j in servos:
+        newSpeeds[j-1][newSpeeds[j-1] > 1023] = 1023
+        newSpeeds[j-1][newSpeeds[j-1] == 0] = 1
 
-def PostProcessSpeeds(speeds):
-    FL_1_Stance = speeds[:,0]
-    FL_1_Swing = speeds[:,4]
-    FL_2_Stance = speeds[:,1]
-    FL_2_Swing = speeds[:,5]
-    FL_3_Stance = speeds[:,2]
-    FL_3_Swing = speeds[:,6]
-    FL_4_Stance = speeds[:,3]
-    FL_4_Swing = speeds[:,7]
+    return newSpeeds
+
+# def PostProcessSpeeds(speeds):
+#     FL_1_Stance = speeds[:,0]
+#     FL_1_Swing = speeds[:,4]
+#     FL_2_Stance = speeds[:,1]
+#     FL_2_Swing = speeds[:,5]
+#     FL_3_Stance = speeds[:,2]
+#     FL_3_Swing = speeds[:,6]
+#     FL_4_Stance = speeds[:,3]
+#     FL_4_Swing = speeds[:,7]
     
-    HL_1_Stance = speeds[:,8]
-    HL_1_Swing = speeds[:,12]
-    HL_2_Stance = speeds[:,9]
-    HL_2_Swing = speeds[:,13]
-    HL_3_Stance = speeds[:,10]
-    HL_3_Swing = speeds[:,14]
-    HL_4_Stance = speeds[:,11]
-    HL_4_Swing = speeds[:,15]
+#     HL_1_Stance = speeds[:,8]
+#     HL_1_Swing = speeds[:,12]
+#     HL_2_Stance = speeds[:,9]
+#     HL_2_Swing = speeds[:,13]
+#     HL_3_Stance = speeds[:,10]
+#     HL_3_Swing = speeds[:,14]
+#     HL_4_Stance = speeds[:,11]
+#     HL_4_Swing = speeds[:,15]
 
-    FL_1_Stride = np.concatenate((FL_1_Stance,FL_1_Swing),axis=0)
-    FL_2_Stride = np.concatenate((FL_2_Stance,FL_2_Swing),axis=0)
-    FL_3_Stride = np.concatenate((FL_3_Stance,FL_3_Swing),axis=0)
-    FL_4_Stride = np.concatenate((FL_4_Stance,FL_4_Swing),axis=0)
+#     FL_1_Stride = np.concatenate((FL_1_Stance,FL_1_Swing),axis=0)
+#     FL_2_Stride = np.concatenate((FL_2_Stance,FL_2_Swing),axis=0)
+#     FL_3_Stride = np.concatenate((FL_3_Stance,FL_3_Swing),axis=0)
+#     FL_4_Stride = np.concatenate((FL_4_Stance,FL_4_Swing),axis=0)
 
-    HL_1_Stride = np.concatenate((HL_1_Stance,HL_1_Swing),axis=0)
-    HL_2_Stride = np.concatenate((HL_2_Stance,HL_2_Swing),axis=0)
-    HL_3_Stride = np.concatenate((HL_3_Stance,HL_3_Swing),axis=0)
-    HL_4_Stride = np.concatenate((HL_4_Stance,HL_4_Swing),axis=0)
+#     HL_1_Stride = np.concatenate((HL_1_Stance,HL_1_Swing),axis=0)
+#     HL_2_Stride = np.concatenate((HL_2_Stance,HL_2_Swing),axis=0)
+#     HL_3_Stride = np.concatenate((HL_3_Stance,HL_3_Swing),axis=0)
+#     HL_4_Stride = np.concatenate((HL_4_Stance,HL_4_Swing),axis=0)
 
 
-    # Shift Number for limb #1 is shifted up by 1 (not present here, number becomes 2 instead of 1)
-    ServoVel1 = RotatePositionArray(FL_1_Stride,1,len(FL_1_Stride)) 
-    ServoVel2 = RotatePositionArray(FL_2_Stride,1,len(FL_2_Stride))
-    ServoVel3 = RotatePositionArray(FL_3_Stride,1,len(FL_3_Stride))
-    ServoVel4 = RotatePositionArray(FL_4_Stride,1,len(FL_4_Stride))
+#     # Shift Number for limb #1 is shifted up by 1 (not present here, number becomes 2 instead of 1)
+#     ServoVel1 = RotatePositionArray(FL_1_Stride,1,len(FL_1_Stride)) 
+#     ServoVel2 = RotatePositionArray(FL_2_Stride,1,len(FL_2_Stride))
+#     ServoVel3 = RotatePositionArray(FL_3_Stride,1,len(FL_3_Stride))
+#     ServoVel4 = RotatePositionArray(FL_4_Stride,1,len(FL_4_Stride))
 
-    ServoVel5 = RotatePositionArray(FL_1_Stride,9,len(FL_1_Stride))
-    ServoVel6 = RotatePositionArray(FL_2_Stride,9,len(FL_2_Stride))
-    ServoVel7 = RotatePositionArray(FL_3_Stride,9,len(FL_3_Stride))
-    ServoVel8 = RotatePositionArray(FL_4_Stride,9,len(FL_4_Stride))
+#     ServoVel5 = RotatePositionArray(FL_1_Stride,9,len(FL_1_Stride))
+#     ServoVel6 = RotatePositionArray(FL_2_Stride,9,len(FL_2_Stride))
+#     ServoVel7 = RotatePositionArray(FL_3_Stride,9,len(FL_3_Stride))
+#     ServoVel8 = RotatePositionArray(FL_4_Stride,9,len(FL_4_Stride))
 
-    ServoVel9 = RotatePositionArray(HL_1_Stride,8,len(HL_1_Stride)) 
-    ServoVel10 = RotatePositionArray(HL_2_Stride,8,len(HL_2_Stride))
-    ServoVel11 = RotatePositionArray(HL_3_Stride,8,len(HL_3_Stride))
-    ServoVel12 = RotatePositionArray(HL_4_Stride,8,len(HL_4_Stride))
+#     ServoVel9 = RotatePositionArray(HL_1_Stride,8,len(HL_1_Stride)) 
+#     ServoVel10 = RotatePositionArray(HL_2_Stride,8,len(HL_2_Stride))
+#     ServoVel11 = RotatePositionArray(HL_3_Stride,8,len(HL_3_Stride))
+#     ServoVel12 = RotatePositionArray(HL_4_Stride,8,len(HL_4_Stride))
 
-    # Does Not Need to be Rotated, starts exactly at zero (0)
-    ServoVel13 = HL_1_Stride
-    ServoVel14 = HL_2_Stride
-    ServoVel15 = HL_3_Stride
-    ServoVel16 = HL_4_Stride
+#     # Does Not Need to be Rotated, starts exactly at zero (0)
+#     ServoVel13 = HL_1_Stride
+#     ServoVel14 = HL_2_Stride
+#     ServoVel15 = HL_3_Stride
+#     ServoVel16 = HL_4_Stride
 
-    ServoVel1 = ServoVel1.reshape(22,1)
-    ServoVel2 = ServoVel2.reshape(22,1)
-    ServoVel3 = ServoVel3.reshape(22,1)
-    ServoVel4 = ServoVel4.reshape(22,1)
+#     ServoVel1 = ServoVel1.reshape(22,1)
+#     ServoVel2 = ServoVel2.reshape(22,1)
+#     ServoVel3 = ServoVel3.reshape(22,1)
+#     ServoVel4 = ServoVel4.reshape(22,1)
 
-    ServoVel5 = ServoVel5.reshape(22,1)
-    ServoVel6 = ServoVel6.reshape(22,1)
-    ServoVel7 = ServoVel7.reshape(22,1)
-    ServoVel8 = ServoVel8.reshape(22,1)
+#     ServoVel5 = ServoVel5.reshape(22,1)
+#     ServoVel6 = ServoVel6.reshape(22,1)
+#     ServoVel7 = ServoVel7.reshape(22,1)
+#     ServoVel8 = ServoVel8.reshape(22,1)
 
-    ServoVel9 = ServoVel9.reshape(22,1)
-    ServoVel10 = ServoVel10.reshape(22,1)
-    ServoVel11 = ServoVel11.reshape(22,1)
-    ServoVel12 = ServoVel12.reshape(22,1)
+#     ServoVel9 = ServoVel9.reshape(22,1)
+#     ServoVel10 = ServoVel10.reshape(22,1)
+#     ServoVel11 = ServoVel11.reshape(22,1)
+#     ServoVel12 = ServoVel12.reshape(22,1)
 
-    ServoVel13 = ServoVel13.reshape(22,1)
-    ServoVel14 = ServoVel14.reshape(22,1)
-    ServoVel15 = ServoVel15.reshape(22,1)
-    ServoVel16 = ServoVel16.reshape(22,1)
+#     ServoVel13 = ServoVel13.reshape(22,1)
+#     ServoVel14 = ServoVel14.reshape(22,1)
+#     ServoVel15 = ServoVel15.reshape(22,1)
+#     ServoVel16 = ServoVel16.reshape(22,1)
 
-    FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
-    HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
-    TOT_VEL = np.concatenate((FL_VEL,HL_VEL),axis=1)
-    print("\nShape of Vels")
-    print(np.shape(TOT_VEL))
-    print("\n")
-    return TOT_VEL
+#     FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
+#     HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
+#     TOT_VEL = np.concatenate((FL_VEL,HL_VEL),axis=1)
+#     print("\nShape of Vels")
+#     print(np.shape(TOT_VEL))
+#     print("\n")
+#     return TOT_VEL
 
 def ReadServoAngles(positionsFile):
 
@@ -910,7 +923,7 @@ def ReadServoAngles(positionsFile):
     FL_TOT_L_1 = list(map(int,FL_TOT_L_1))
     j = 0
     for i in FL_TOT_L_2:
-        FL_TOT_L_1[j] = 2048 + (i * dyn_con)
+        FL_TOT_L_2[j] = 2048 + (i * dyn_con)
         j += 1
     FL_TOT_L_2 = FL_TOT_L_2.round()
     FL_TOT_L_2 = list(map(int,FL_TOT_L_2))
@@ -1145,10 +1158,9 @@ def ShutDown():
     # Turn off power to external boards and other systems
     print("Thank you for using Theo!")
 
-def SpeedMerge():
+def SpeedMerge(PositionsMatrix):
     desired_timespan = float(input("How long (in seconds) do you want a single stride to take?: "))
-    speeds = DetermineSpeeds(desired_timespan,PositionsFile)
-    TotMatrix_speeds = PostProcessSpeeds(speeds)
+    TotMatrix_speeds = DetermineSpeeds(desired_timespan,PositionsMatrix)
     return TotMatrix_speeds
 
 def AssembleRobot(PositionsArray):
