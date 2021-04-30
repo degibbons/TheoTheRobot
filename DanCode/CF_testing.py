@@ -691,6 +691,13 @@ def DetermineSpeeds(tspan,PositionsMatrix):
     h_sw_per = h_swing / 8.24
     f_st_per = f_stance / 8.24
     f_sw_per = f_swing / 8.24
+    #Starting % index for each limb
+    L_hl = 0
+    L_fl = 9 # 90% Approximately
+    R_hl = 8 # 80% Approximately
+    R_fl = 1 # 10% Approximately
+    #Points per Phase
+    pointsPerPhase = 11
     speeds = np.array(speeds)
     b = speeds.shape
     cLength = int(b[1]/2)
@@ -709,7 +716,10 @@ def DetermineSpeeds(tspan,PositionsMatrix):
                     rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
                 else:
                     rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
-                movementTime = (tspan*f_st_per/cLength)/60
+                if ((j-1) >= (pointsPerPhase - R_fl) and (j-1)<=(pointsPerPhase - R_fl + 10)):
+                    movementTime = (tspan*f_sw_per/cLength)/60
+                else:
+                    movementTime = (tspan*f_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
                 newSpeeds[i-1][j-1] = round(movementSpeed)
             elif (i == 5 or i == 6 or i == 7 or i == 8): 
@@ -717,7 +727,10 @@ def DetermineSpeeds(tspan,PositionsMatrix):
                     rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
                 else:
                     rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
-                movementTime = (tspan*f_sw_per/cLength)/60
+                if ((j-1) >= (pointsPerPhase - L_fl) and (j-1)<=(pointsPerPhase - L_fl + 10)):
+                    movementTime = (tspan*f_sw_per/cLength)/60
+                else:
+                    movementTime = (tspan*f_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
                 newSpeeds[i-1][j-1] = round(movementSpeed)
             elif (i == 9 or i == 10 or i == 11 or i == 12 ):
@@ -725,7 +738,10 @@ def DetermineSpeeds(tspan,PositionsMatrix):
                     rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
                 else:
                     rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
-                movementTime = (tspan*h_st_per/cLength)/60
+                if ((j-1) >= (pointsPerPhase - R_hl) and (j-1)<=(pointsPerPhase - R_hl + 10)):
+                    movementTime = (tspan*h_sw_per/cLength)/60
+                else:
+                    movementTime = (tspan*h_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
                 newSpeeds[i-1][j-1] = round(movementSpeed)
             elif (i == 13 or i == 14 or i == 15 or i == 16 ):
@@ -733,7 +749,10 @@ def DetermineSpeeds(tspan,PositionsMatrix):
                     rotations = abs(speeds[i-1][0]-speeds[i-1][j-1])/4096
                 else:
                     rotations = abs(speeds[i-1][j]-speeds[i-1][j-1])/4096
-                movementTime = (tspan*h_sw_per/cLength)/60
+                if ((j-1) >= (pointsPerPhase - L_hl) and (j-1)<=(pointsPerPhase - L_hl + 10)):
+                    movementTime = (tspan*h_sw_per/cLength)/60
+                else:
+                    movementTime = (tspan*h_st_per/cLength)/60
                 movementSpeed = (rotations / movementTime) / 0.114
                 newSpeeds[i-1][j-1] = round(movementSpeed)
     for i in servos:
