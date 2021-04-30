@@ -40,19 +40,25 @@ while 1:
     if (desired_action == 1):
         print("Running Auto Continuous Move Protocol...\n")
         matrix_speeds = SpeedMerge(PositionsMatrix)
-        for each_servo in TheoLimbDict[desired_servo_limb].ServoList:
+        for each_servo in TheoLimbDict[1].ServoList:
             each_servo.InitialSetup()
             each_servo.ToggleTorque(1,portHandler,packetHandler)
             each_servo.Speeds = matrix_speeds[:][each_servo.ID-1]
-        print("\nMoving Limb #{s_l} Home:\n".format(s_l=TheoLimbDict[desired_servo_limb]))
-        TheoLimbDict[desired_servo_limb].MoveHome(portHandler,packetHandler)
+        for each_servo in TheoLimbDict[2].ServoList:
+            each_servo.InitialSetup()
+            each_servo.ToggleTorque(1,portHandler,packetHandler)
+            each_servo.Speeds = matrix_speeds[:][each_servo.ID-1]
+        print("\nMoving Limb #{s_l} Home.\n".format(s_l=TheoLimbList[0]))
+        print("\nMoving Limb #{s_l} Home.\n".format(s_l=TheoLimbList[1]))
+        TheoLimbDict[1].MoveHome(portHandler,packetHandler)
+        TheoLimbDict[2].MoveHome(portHandler,packetHandler)
         print("\nFinished Moving\n")
         print("Press Enter to start when ready.")
         print("When done, hit Escape.\n")
         while 1:
             if getch() == chr(0x0D):
                 break
-        RunThreads(TheoLimbDict[desired_servo_limb],portHandler,packetHandler)
+        RunThreads(TheoLimbDict[1],TheoLimbDict[2],portHandler,packetHandler)
     elif (desired_action == 2): # Shut down robot, delete object structures, and close documents
         CleanUp(TheoBody,TheoLimbList, ServoObjList)
         ShutDown()

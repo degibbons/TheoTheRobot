@@ -432,7 +432,7 @@ class Leg(Limb):
 
     def MoveLimb(self,IndexIn,portHandler,packetHandler,isHomeMovement):
 
-        print("Entered Limb Move Function")
+
          # Initialize GroupSyncWrite instance
         groupSyncWritePOS = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION)
 
@@ -455,7 +455,6 @@ class Leg(Limb):
         for _ , d in self.ServoDict.items():
             FormattedVel = self.GoalVelocity[index]
             if isHomeMovement == True:
-                print("Moving to Home Position/n")
                 FormattedVel = FormatSendData(self.HomeSpeed)
             dxl_addparam_result = groupSyncWriteVEL.addParam(d.ID,FormattedVel)
             if dxl_addparam_result != True:
@@ -471,7 +470,6 @@ class Leg(Limb):
             index += 1
 
         # Syncwrite goal velocity
-        print("Writing Velocity")
         dxl_comm_result = groupSyncWriteVEL.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
@@ -479,7 +477,6 @@ class Leg(Limb):
         # Clear syncwrite parameter storage
         groupSyncWriteVEL.clearParam()
 
-        print("Writing Position")
         # Syncwrite goal position
         dxl_comm_result = groupSyncWritePOS.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
@@ -517,45 +514,42 @@ class Leg(Limb):
                     PositionList.append(Pos_num)
                     SpeedList.append(Sp_num)
                 CombinedList = list(zip(PositionList,SpeedList))
+                print("-------------------------")
                 print("Index Movement is: {ind}".format(ind = index))
+                print("-------------------------")
                 index += 1
                 if (index > 21): 
                     index = 0
                 elif (index == 1):
+                    print("==================================================")
                     print("Stride Number: {sn}".format(sn=self.StrideCount))
+                    print("==================================================")
                     self.StrideCount += 1
                 isStopped = [0] * len(self.ServoList)
                 for i in self.IDList:
                     groupSyncReadMOV.addParam(i)
                 while 1:
                     # Syncread Moving Value
-                    print("Running Read Loop")
                     dxl_comm_result = groupSyncReadMOV.txRxPacket()
                     if dxl_comm_result != COMM_SUCCESS:
                         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
                     if (stopVal == 1):
                         print("\nFinishing All Movement.\n")
                         return
-                    j = 0
-                    for i in self.IDList:
-                        # Get Dynamixel#1 present Moving value
-                        dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)
-                        print("dxl_mov for #{ser_name} is {dxl_mov}: ".format(dxl_mov = dxl_mov,ser_name = i) )                   
-                        if (dxl_mov == 0) and (isStopped[i-1] == 0):
-                            isStopped[i-1] = 1
-                        j += 1
-                    print('isStopped = {}-{}-{}-{}'.format(isStopped[0],isStopped[1],isStopped[2],isStopped[3]))
 
+                    for count,i in enumerate(self.IDList):
+                        # Get Dynamixel#1 present Moving value
+                        dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)               
+                        if (dxl_mov == 0) and (isStopped[count] == 0):
+                            isStopped[count] = 1
 
                     if 0 in isStopped:
-                        print("Not done moving")
+                        pass
                     else:
-                        
-                        print("Breaking out of check loop\n")
                         DocWriter.writerow(CombinedList)
                         break
                 groupSyncReadMOV.clearParam()
-        print("Done Writing! Please Hit Esc.\n\n")
+        print("\nDone Writing! Please Hit Esc.\n\n")
 
     def UpdateOtherValues(self,IndexIn):
         self.GoalVelocity = []
@@ -763,85 +757,6 @@ def DetermineSpeeds(tspan,PositionsMatrix):
 
     return newSpeeds
 
-# def PostProcessSpeeds(speeds):
-#     FL_1_Stance = speeds[:,0]
-#     FL_1_Swing = speeds[:,4]
-#     FL_2_Stance = speeds[:,1]
-#     FL_2_Swing = speeds[:,5]
-#     FL_3_Stance = speeds[:,2]
-#     FL_3_Swing = speeds[:,6]
-#     FL_4_Stance = speeds[:,3]
-#     FL_4_Swing = speeds[:,7]
-    
-#     HL_1_Stance = speeds[:,8]
-#     HL_1_Swing = speeds[:,12]
-#     HL_2_Stance = speeds[:,9]
-#     HL_2_Swing = speeds[:,13]
-#     HL_3_Stance = speeds[:,10]
-#     HL_3_Swing = speeds[:,14]
-#     HL_4_Stance = speeds[:,11]
-#     HL_4_Swing = speeds[:,15]
-
-#     FL_1_Stride = np.concatenate((FL_1_Stance,FL_1_Swing),axis=0)
-#     FL_2_Stride = np.concatenate((FL_2_Stance,FL_2_Swing),axis=0)
-#     FL_3_Stride = np.concatenate((FL_3_Stance,FL_3_Swing),axis=0)
-#     FL_4_Stride = np.concatenate((FL_4_Stance,FL_4_Swing),axis=0)
-
-#     HL_1_Stride = np.concatenate((HL_1_Stance,HL_1_Swing),axis=0)
-#     HL_2_Stride = np.concatenate((HL_2_Stance,HL_2_Swing),axis=0)
-#     HL_3_Stride = np.concatenate((HL_3_Stance,HL_3_Swing),axis=0)
-#     HL_4_Stride = np.concatenate((HL_4_Stance,HL_4_Swing),axis=0)
-
-
-#     # Shift Number for limb #1 is shifted up by 1 (not present here, number becomes 2 instead of 1)
-#     ServoVel1 = RotatePositionArray(FL_1_Stride,1,len(FL_1_Stride)) 
-#     ServoVel2 = RotatePositionArray(FL_2_Stride,1,len(FL_2_Stride))
-#     ServoVel3 = RotatePositionArray(FL_3_Stride,1,len(FL_3_Stride))
-#     ServoVel4 = RotatePositionArray(FL_4_Stride,1,len(FL_4_Stride))
-
-#     ServoVel5 = RotatePositionArray(FL_1_Stride,9,len(FL_1_Stride))
-#     ServoVel6 = RotatePositionArray(FL_2_Stride,9,len(FL_2_Stride))
-#     ServoVel7 = RotatePositionArray(FL_3_Stride,9,len(FL_3_Stride))
-#     ServoVel8 = RotatePositionArray(FL_4_Stride,9,len(FL_4_Stride))
-
-#     ServoVel9 = RotatePositionArray(HL_1_Stride,8,len(HL_1_Stride)) 
-#     ServoVel10 = RotatePositionArray(HL_2_Stride,8,len(HL_2_Stride))
-#     ServoVel11 = RotatePositionArray(HL_3_Stride,8,len(HL_3_Stride))
-#     ServoVel12 = RotatePositionArray(HL_4_Stride,8,len(HL_4_Stride))
-
-#     # Does Not Need to be Rotated, starts exactly at zero (0)
-#     ServoVel13 = HL_1_Stride
-#     ServoVel14 = HL_2_Stride
-#     ServoVel15 = HL_3_Stride
-#     ServoVel16 = HL_4_Stride
-
-#     ServoVel1 = ServoVel1.reshape(22,1)
-#     ServoVel2 = ServoVel2.reshape(22,1)
-#     ServoVel3 = ServoVel3.reshape(22,1)
-#     ServoVel4 = ServoVel4.reshape(22,1)
-
-#     ServoVel5 = ServoVel5.reshape(22,1)
-#     ServoVel6 = ServoVel6.reshape(22,1)
-#     ServoVel7 = ServoVel7.reshape(22,1)
-#     ServoVel8 = ServoVel8.reshape(22,1)
-
-#     ServoVel9 = ServoVel9.reshape(22,1)
-#     ServoVel10 = ServoVel10.reshape(22,1)
-#     ServoVel11 = ServoVel11.reshape(22,1)
-#     ServoVel12 = ServoVel12.reshape(22,1)
-
-#     ServoVel13 = ServoVel13.reshape(22,1)
-#     ServoVel14 = ServoVel14.reshape(22,1)
-#     ServoVel15 = ServoVel15.reshape(22,1)
-#     ServoVel16 = ServoVel16.reshape(22,1)
-
-#     FL_VEL = np.concatenate((ServoVel1, ServoVel2, ServoVel3, ServoVel4, ServoVel5, ServoVel6, ServoVel7, ServoVel8),axis=1)
-#     HL_VEL = np.concatenate((ServoVel9, ServoVel10, ServoVel11, ServoVel12, ServoVel13, ServoVel14, ServoVel15, ServoVel16),axis=1)
-#     TOT_VEL = np.concatenate((FL_VEL,HL_VEL),axis=1)
-#     print("\nShape of Vels")
-#     print(np.shape(TOT_VEL))
-#     print("\n")
-#     return TOT_VEL
 
 def ReadServoAngles(positionsFile):
 
@@ -1210,6 +1125,7 @@ def AssembleRobot(PositionsArray):
     Tail_Limb = []
     TheoLimbList = []
     TheoLimbDict = {}
+    print("\n")
     for ServoID in ServoObjDict:
         if (ServoID == 1 or ServoID == 2 or ServoID == 3 or ServoID == 4):
             FR_limbCount += 1
@@ -1232,59 +1148,69 @@ def AssembleRobot(PositionsArray):
             TheoLimbList.append(FR_Leg)
             TheoLimbDict[1] = FR_Leg
             print("Front Right Limb is Digitally Assembled.")
-            for i in FR_Leg.IDList:
-                print(i)
+            FR_limbCount = 0
         if (FL_limbCount == 4):
             FL_Limb = [ServoObjDict[5],ServoObjDict[6],ServoObjDict[7],ServoObjDict[8]]
             FL_Leg = Leg(2,FL_Limb)
             TheoLimbList.append(FL_Leg)
             TheoLimbDict[2] = FL_Leg
-            print("Front Left Limb is Digitally Assembled.")  
+            print("Front Left Limb is Digitally Assembled.")
+            FL_limbCount = 0
         if (BR_limbCount == 4):
             BR_Limb = [ServoObjDict[9],ServoObjDict[10],ServoObjDict[11],ServoObjDict[12]]
             BR_Leg = Leg(3,BR_Limb)
             TheoLimbList.append(BR_Leg)
             TheoLimbDict[3] = BR_Leg
             print("Back Right Limb is Digitally Assembled.")
+            BR_limbCount = 0
         if (BL_limbCount == 4):
             BL_Limb = [ServoObjDict[13],ServoObjDict[14],ServoObjDict[15],ServoObjDict[16]]
             BL_Leg = Leg(4,BL_Limb)
             TheoLimbList.append(BL_Leg)
             TheoLimbDict[4] = BL_Leg
             print("Back Left Limb is Digitally Assembled.")
+            BL_limbCount = 0
         if (Neck_limbCount == 2):
             Neck_Limb = [ServoObjDict[17],ServoObjDict[18]]
             NeckStructure = Neck(5,Neck_Limb)
             TheoLimbList.append(NeckStructure)
             TheoLimbDict[5] = NeckStructure
             print("Neck Limb is Digitally Assembled.")
+            Neck_limbCount = 0
         if (Spine_limbCount == 4):
             Spine_Limb = [ServoObjDict[19],ServoObjDict[20],ServoObjDict[21],ServoObjDict[22]]
             SpineStructure = Spine(6,Spine_Limb)
             TheoLimbList.append(SpineStructure)
             TheoLimbDict[6] = SpineStructure
             print("Spine Limb is Digitally Assembled.")
+            Spine_limbCount = 0
         if (Tail_limbCount == 2):
             Tail_Limb = [ServoObjDict[23],ServoObjDict[24]]
             TailStructure = Tail(7,Tail_Limb)
             TheoLimbList.append(TailStructure)
             TheoLimbDict[7] = TailStructure
             print("Tail Limb is Digitally Assembled.")
+            Tail_limbCount = 0
 
     TheoBody = Body(TheoLimbList)
+    print("Body Structure Digitally Assembled.\n")
 
     return ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody
 
-def RunThreads(ObjToMove,portHandler,packetHandler):
+def RunThreads(ObjToMove1,ObjToMove2,portHandler,packetHandler):
     global stopVal
     global t1
     global t2
     global thread_running
-    t1 = Thread(target=ObjToMove.ContinuousMove,args=(portHandler,packetHandler))
-    t2 = Thread(target=DetectStopInput)
+    t1 = Thread(target=ObjToMove1.ContinuousMove,args=(portHandler,packetHandler))
+    t2 = Thread(target=ObjToMove2.ContinuousMove,args=(portHandler,packetHandler))
+    #t3 = Thread(target=ObjToMove1.ContinuousMove,args=(portHandler,packetHandler))
+    #t4 = Thread(target=ObjToMove2.ContinuousMove,args=(portHandler,packetHandler))
+    t5 = Thread(target=DetectStopInput)
     thread_running = True
     t1.start()
     t2.start()
-    t2.join()
+    t5.start()
+    t5.join()
     thread_running = False
     stopVal = 0
