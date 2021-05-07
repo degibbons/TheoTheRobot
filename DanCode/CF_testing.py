@@ -23,7 +23,7 @@ class Servo:
     def __init__(self,IDnum,Positions):
         self.ID = IDnum
         
-        self.portHandler = PortHandler(DEVICENAME)
+        self.portHandler = PortHandler(DEVICENAME_1)
 
         self.packetHandler = PacketHandler(PROTOCOL_VERSION)
 
@@ -51,18 +51,18 @@ class Servo:
         self.IsHome = None
         self.Activated = 1 # Change this to zero if you don't want it to move
         self.FirstMovePosition = 0
-        self.OffsetPercent = 0
-        self.Phase = 0 # 2 for Stance, 1 for transition to stance, -2 for swing, -1 for transition to swing, 0 for other
+        #self.OffsetPercent = 0
+        #self.Phase = 0 # 2 for Stance, 1 for transition to stance, -2 for swing, -1 for transition to swing, 0 for other
         self.PresentPosition = 0
         self.GivenPosition = 0
         self.GivenSpeed = 0
         self.MovementTime = 0 # Length of time for the last movement given
-        self.PhaseIndex = 0 
+        #self.PhaseIndex = 0 
         self.StrideIndex = 1
-        self.PhaseTime = 0
-        self.StrideTime = 0
-        self.TotalTime = 0
-        self.IndexShifts = RotatePositionArray(list(range(0,22)),self.OffsetPercent/10,len(list(range(0,22))))
+        #self.PhaseTime = 0
+        #self.StrideTime = 0
+        #self.TotalTime = 0
+        #self.IndexShifts = RotatePositionArray(list(range(0,22)),self.OffsetPercent/10,len(list(range(0,22))))
         self.DataArray = []
 
     def InitialSetup(self): 
@@ -279,7 +279,7 @@ class Servo:
         # Initialize PortHandler Structs
         # Set the port path
         # Get methods and members of PortHandlerLinux or PortHandlerWindows
-        port_num = dynamixel.portHandler(DEVICENAME)
+        port_num = dynamixel.portHandler(DEVICENAME_1)
 
         # Initialize PacketHandler Structs
         dynamixel.packetHandler()
@@ -415,20 +415,20 @@ class Leg(Limb):
         self.PhaseTime = 0 
         self.StrideTime = 0
         self.StrideCount = 1
-        offsets = []
-        for k in self.ServoList:
-            offsets.append(k.OffsetPercent)
-        if len(set(offsets))==1:
-            self.Offset = offsets[0]
-        else:
-            print("The Offsets for the Servos that make up this Leg are not consistent. Please Fix.")
-        self.IndexShifts = RotatePositionArray(list(range(0,22)),self.Offset/10,len(list(range(0,22))))
-        self.DataArray1 = []
-        self.DataArray2 = []
-        self.DataArray3 = []
-        self.DataArray4 = []
+        # offsets = []
+        # for k in self.ServoList:
+        #     offsets.append(k.OffsetPercent)
+        # if len(set(offsets))==1:
+        #     self.Offset = offsets[0]
+        # else:
+        #     print("The Offsets for the Servos that make up this Leg are not consistent. Please Fix.")
+        # self.IndexShifts = RotatePositionArray(list(range(0,22)),self.Offset/10,len(list(range(0,22))))
+        # self.DataArray1 = []
+        # self.DataArray2 = []
+        # self.DataArray3 = []
+        # self.DataArray4 = []
 
-        self.OnceOrCont = 0
+        # self.OnceOrCont = 0
 
     def MoveLimb(self,IndexIn,portHandler,packetHandler,isHomeMovement):
 
@@ -578,19 +578,119 @@ class Tail(Limb):
 
 
 class Body:
-    def __init__(self,limbs):
-        self.limbs = [limbs]
+    def __init__(self,limbs): #limbs should be a list
+        self.limbs = limbs
 
-    def MoveBody(self,IndexIn,portHandler,packetHandler):
-        for SingleLimb in self.limbs:
-            SingleLimb.MoveLimb(IndexIn,portHandler,PacketHandler,ReadOption=True)
+    def MoveBody(self,IndexIn,portHandler,packetHandler,isHomeMovement):
+         # Initialize GroupSyncWrite instance
+        groupSyncWritePOS_Front = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION
+        # Initialize GroupSyncWrite instance
+        groupSyncWriteVEL_Front = GroupSyncWrite(portHandler, packetHandler, ADDR_PROFILE_VELOCITY, LEN_VELOCITY_LIMIT)
+        # Initialize GroupSyncWrite instance
+        groupSyncWritePOS_Back = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITION, LEN_PRO_GOAL_POSITION
+        # Initialize GroupSyncWrite instance
+        groupSyncWriteVEL_Back = GroupSyncWrite(portHandler, packetHandler, ADDR_PROFILE_VELOCITY, LEN_VELOCITY_LIMIT)
+
+        self.GoalVelocity_FR = []
+        self.GoalPosition_FR = []
+        self.GoalVelocity_FL = []
+        self.GoalPosition_FL = []
+        self.GoalVelocity_BR = []
+        self.GoalPosition_BR = []
+        self.GoalVelocity_BL = []
+        self.GoalPosition_BL = []
+        P_IndexIn = IndexIn
+        
+        if (IndexIn == 0):
+            S_IndexIn = 21
+        else:
+            S_IndexIn = IndexIn-1
+
+        for limbX in self.limbs:
+            if (limbX.LimbNumber == 1):
+                for servoX in limbX.ServoList:
+                    self.GoalVelocity_FR.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
+                    self.GoalPosition_FR.append(FormatSendData(servoX.Positions[P_IndexIn]))
+            elif(limbX.LimbNumber == 2):
+                for servoX in limbX.ServoList:
+                    self.GoalVelocity_FL.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
+                    self.GoalPosition_FL.append(FormatSendData(servoX.Positions[P_IndexIn]))
+            elif (limbX.LimbNumber == 3):
+                for servoX in limbX.ServoList:
+                    self.GoalVelocity_BL.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
+                    self.GoalPosition_BL.append(FormatSendData(servoX.Positions[P_IndexIn]))
+            elif (limbX.LimbNumber == 4):
+                for servoX in limbX.ServoList:
+                    self.GoalVelocity_BL.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
+                    self.GoalPosition_BL.append(FormatSendData(servoX.Positions[P_IndexIn]))
+            else:
+                pass
+
+        
 
     def MoveHome(self,portHandler,packetHandler):
-        for SingleLimb in self.limbs:
-            SingleLimb.MoveHome(portHandler,PacketHandler,ReadOption=False)
+        pass
 
     def ContinuousMove(self,portHandler,packetHandler):
-        pass # Going to need threads for these???
+        global stopVal
+        # Initialize GroupSyncRead instace for Present Position
+        groupSyncReadMOV = GroupSyncRead(portHandler, packetHandler, ADDR_MOVING, LEN_MOVING)
+        index = [1] * len(self.limbs)
+        innerIndex = 0
+        with open('SpeedPosMatching.csv', 'a', newline='') as csvfile:
+            DocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
+            for x in range(0,51):
+                for limbX in self.limbs:
+                    limbX.MoveLimb(index,portHandler,packetHandler,False)
+                    if (index[innerIndex] == 0):
+                        S_IndexIn = 21
+                    else:
+                        S_IndexIn = index[innerIndex]-1
+                    P_IndexIn = index
+                    PositionList = []
+                    SpeedList = []
+                    for b in limbX.ServoList:
+                        Pos_num = b.Positions[P_IndexIn]
+                        Sp_num = int(b.Speeds[S_IndexIn])
+                        PositionList.append(Pos_num)
+                        SpeedList.append(Sp_num)
+                    CombinedList = list(zip(PositionList,SpeedList))
+                    print("-------------------------")
+                    print("Index Movement for limb {lnum} is: {ind}".format(ind = index, lnum = limbX.LimbNumber))
+                    print("-------------------------")
+                    index[innerIndex] += 1
+                    if (index[innerIndex] > 21): 
+                        index[innerIndex] = 0
+                    elif (index[innerIndex] == 1):
+                        print("==================================================")
+                        print("Stride Number: {sn}".format(sn=self.StrideCount))
+                        print("==================================================")
+                        limbX.StrideCount += 1
+                    isStopped = [0] * len(limbX.ServoList)
+                    for i in limbX.IDList:
+                        groupSyncReadMOV.addParam(i)
+                    while 1:
+                        # Syncread Moving Value
+                        dxl_comm_result = groupSyncReadMOV.txRxPacket()
+                        if dxl_comm_result != COMM_SUCCESS:
+                            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                        if (stopVal == 1):
+                            print("\nFinishing All Movement.\n")
+                            return
+
+                        for count,i in enumerate(limbX.IDList):
+                            # Get Dynamixel#1 present Moving value
+                            dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)               
+                            if (dxl_mov == 0) and (isStopped[count] == 0):
+                                isStopped[count] = 1
+
+                        if 0 in isStopped:
+                            pass
+                        else:
+                            DocWriter.writerow(CombinedList)
+                            break
+                    groupSyncReadMOV.clearParam()
+        print("\nDone Writing! Please Hit Esc.\n\n")
 
     def __del__(self):
             pass
@@ -601,7 +701,7 @@ def InitialSetup():
     # Initialize PortHandler instance
     # Set the port path
     # Get methods and members of PortHandlerLinux or PortHandlerWindows
-    portHandler = PortHandler(DEVICENAME)
+    portHandler = PortHandler(DEVICENAME_1)
 
     # Initialize PacketHandler instance
     # Set the protocol version
@@ -1038,7 +1138,7 @@ def PingServos():
     # Initialize PortHandler instance
     # Set the port path
     # Get methods and members of PortHandlerLinux or PortHandlerWindows
-    portHandler = PortHandler(DEVICENAME)
+    portHandler = PortHandler(DEVICENAME_1)
 
     # Initialize PacketHandler instance
     # Set the protocol version
@@ -1204,8 +1304,8 @@ def RunThreads(ObjToMove1,ObjToMove2,portHandler,packetHandler):
     global thread_running
     t1 = Thread(target=ObjToMove1.ContinuousMove,args=(portHandler,packetHandler))
     t2 = Thread(target=ObjToMove2.ContinuousMove,args=(portHandler,packetHandler))
-    #t3 = Thread(target=ObjToMove1.ContinuousMove,args=(portHandler,packetHandler))
-    #t4 = Thread(target=ObjToMove2.ContinuousMove,args=(portHandler,packetHandler))
+    #t3 = Thread(target=ObjToMove3.ContinuousMove,args=(portHandler,packetHandler))
+    #t4 = Thread(target=ObjToMove4.ContinuousMove,args=(portHandler,packetHandler))
     t5 = Thread(target=DetectStopInput)
     thread_running = True
     t1.start()

@@ -66,8 +66,11 @@ SPINE   = [DXL19_ID, DXL20_ID, DXL21_ID, DXL22_ID]
 TAIL    = [DXL23_ID, DXL24_ID]
 
 BAUDRATE                    = 1000000             # Dynamixel default baudrate : 57600
-DEVICENAME                  = '/dev/ttyUSB0'    # Check which port is being used on your controller
+DEVICENAME_1                  = '/dev/ttyUSB0'    # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
+DEVICENAME_2                  = '/dev/ttyUSB1'
+DEVICENAME_3                  = '/dev/ttyUSB2'
+DEVICENAME_4                  = '/dev/ttyUSB3'                                            
 
 FACTORYRST_DEFAULTBAUDRATE  = 57600                         # Dynamixel baudrate set by factoryreset
 NEW_BAUDNUM                 = 3                             # New baudnum to recover Dynamixel baudrate as it was
@@ -104,10 +107,10 @@ dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]    
 #HL_SW_R_3 = [1660, 1297, 1171, 1225, 1234, 1136, 1136, 1378, 1737, 2039, 1978]
 #HL_SW_R_4 = [2380, 2736, 2835, 2791, 2785, 2547, 2546, 2467, 2519, 2573, 2620]
 ## Hindlimb Total Stride Right
-HL_TOT_R_1 = HL_ST_R_1 + HL_SW_R_1
-HL_TOT_R_2 = HL_ST_R_2 + HL_SW_R_2
-HL_TOT_R_3 = HL_ST_R_3 + HL_SW_R_3
-HL_TOT_R_4 = HL_ST_R_4 + HL_SW_R_4
+# HL_TOT_R_1 = HL_ST_R_1 + HL_SW_R_1
+# HL_TOT_R_2 = HL_ST_R_2 + HL_SW_R_2
+# HL_TOT_R_3 = HL_ST_R_3 + HL_SW_R_3
+# HL_TOT_R_4 = HL_ST_R_4 + HL_SW_R_4
 
 ## Hindlimb Stance Left
 #HL_ST_L_1 = [2653, 2616, 2555, 2444, 2310, 2195, 1960, 1862, 1674, 1602, 1597]
@@ -120,10 +123,10 @@ HL_TOT_R_4 = HL_ST_R_4 + HL_SW_R_4
 #HL_SW_L_3 = [2436, 2799, 2925, 2871, 2862, 2960, 2960, 2718, 2359, 2057, 2118]
 #HL_SW_L_4 = [2380, 2736, 2835, 2791, 2785, 2547, 2456, 2467, 2519, 2573, 2620]
 ## Hindlimb Total Stride Left
-HL_TOT_L_1 = HL_ST_L_1 + HL_SW_L_1
-HL_TOT_L_2 = HL_ST_L_2 + HL_SW_L_2
-HL_TOT_L_3 = HL_ST_L_3 + HL_SW_L_3
-HL_TOT_L_4 = HL_ST_L_4 + HL_SW_L_4
+# HL_TOT_L_1 = HL_ST_L_1 + HL_SW_L_1
+# HL_TOT_L_2 = HL_ST_L_2 + HL_SW_L_2
+# HL_TOT_L_3 = HL_ST_L_3 + HL_SW_L_3
+# HL_TOT_L_4 = HL_ST_L_4 + HL_SW_L_4
 
 ## Forelimb Stance Right
 #FL_ST_R_1 = [1680, 1838, 2001, 1998, 1990, 1981, 1975, 2008, 2127, 2177, 2197]
@@ -136,10 +139,10 @@ HL_TOT_L_4 = HL_ST_L_4 + HL_SW_L_4
 #FL_SW_R_3 = [1653, 1563, 1392, 1282, 1323, 1468, 1675, 1906, 2120, 2277, 2338]
 #FL_SW_R_4 = [1818, 1839, 1897, 1980, 2076, 2235, 2411, 2474, 2377, 2229, 2153]
 ## Forelimb Total Stride Right
-FL_TOT_R_1 = FL_ST_R_1 + FL_SW_R_1
-FL_TOT_R_2 = FL_ST_R_2 + FL_SW_R_2
-FL_TOT_R_3 = FL_ST_R_3 + FL_SW_R_3
-FL_TOT_R_4 = FL_ST_R_4 + FL_SW_R_4
+# FL_TOT_R_1 = FL_ST_R_1 + FL_SW_R_1
+# FL_TOT_R_2 = FL_ST_R_2 + FL_SW_R_2
+# FL_TOT_R_3 = FL_ST_R_3 + FL_SW_R_3
+# FL_TOT_R_4 = FL_ST_R_4 + FL_SW_R_4
 
 ## Forelimb Stance Left
 #FL_ST_L_1 = [2416, 2258, 2095, 2098, 2106, 2115, 2121, 2088, 1969, 1919, 1899]
@@ -152,10 +155,10 @@ FL_TOT_R_4 = FL_ST_R_4 + FL_SW_R_4
 #FL_SW_L_3 = [2443, 2533, 2704, 2814, 2773, 2628, 2421, 2190, 1976, 1819, 1758]
 #FL_SW_L_4 = [1818, 1839, 1897, 1980, 2076, 2235, 2411, 2474, 2377, 2229, 2153]
 ## Forelimb Total Stride Left
-FL_TOT_L_1 = FL_ST_L_1 + FL_SW_L_1
-FL_TOT_L_2 = FL_ST_L_2 + FL_SW_L_2
-FL_TOT_L_3 = FL_ST_L_3 + FL_SW_L_3
-FL_TOT_L_4 = FL_ST_L_4 + FL_SW_L_4
+# FL_TOT_L_1 = FL_ST_L_1 + FL_SW_L_1
+# FL_TOT_L_2 = FL_ST_L_2 + FL_SW_L_2
+# FL_TOT_L_3 = FL_ST_L_3 + FL_SW_L_3
+# FL_TOT_L_4 = FL_ST_L_4 + FL_SW_L_4
 
 HOME_SPEED = 50
 STRAIGHT_SPINE = 2048
