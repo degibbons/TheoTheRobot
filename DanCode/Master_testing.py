@@ -24,7 +24,7 @@ else:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 
-[portHandler, packetHandler] = InitialSetup()              # Uses Dynamixel SDK library
+[portHandler_1, portHandler_2, portHandler_3, portHandler_4, packetHandler] = InitialSetup()              # Uses Dynamixel SDK library
 
 
 (FL_TOT_R_1, FL_TOT_R_2, FL_TOT_R_3, FL_TOT_R_4, FL_TOT_L_1, FL_TOT_L_2, FL_TOT_L_3, FL_TOT_L_4,
@@ -34,31 +34,37 @@ PositionsMatrix = PostProcessPositions(FL_TOT_R_1, FL_TOT_R_2, FL_TOT_R_3, FL_TO
  HL_TOT_R_1, HL_TOT_R_2, HL_TOT_R_3, HL_TOT_R_4, HL_TOT_L_1, HL_TOT_L_2, HL_TOT_L_3, HL_TOT_L_4)
 
 [ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody] = AssembleRobot(PositionsMatrix)
-desired_servo_limb = 1
+#desired_servo_limb = 1
 while 1:
     desired_action = int(input("Run Test Protocol?(1) or Shutdown Sequence?(2):"))
     if (desired_action == 1):
         print("Running Auto Continuous Move Protocol...\n")
         matrix_speeds = SpeedMerge(PositionsMatrix)
-        for each_servo in TheoLimbDict[1].ServoList:
-            each_servo.InitialSetup()
-            each_servo.ToggleTorque(1,portHandler,packetHandler)
-            each_servo.Speeds = matrix_speeds[:][each_servo.ID-1]
-        for each_servo in TheoLimbDict[2].ServoList:
-            each_servo.InitialSetup()
-            each_servo.ToggleTorque(1,portHandler,packetHandler)
-            each_servo.Speeds = matrix_speeds[:][each_servo.ID-1]
-        print("\nMoving Limb #{s_l} Home.\n".format(s_l=TheoLimbList[0]))
-        print("\nMoving Limb #{s_l} Home.\n".format(s_l=TheoLimbList[1]))
-        TheoLimbDict[1].MoveHome(portHandler,packetHandler)
-        TheoLimbDict[2].MoveHome(portHandler,packetHandler)
-        print("\nFinished Moving\n")
+        # Initialize Spine
+        for each_limb in MainBodyLimbs:
+            portHandlerX = portHandler_3
+            for each_servo in TheoLimbDict[each_limb].ServoList:
+                each_servo.InitialSetup(portHandlerX)
+                each_servo.ToggleTorque(1,portHandlerX,packetHandler)
+        # Initialize Legs
+        for each_limb in LegLimbs:
+            if (each_limb == 1 or each_limb == 2):
+                portHandlerX = portHandler_1
+            elif (each_limb == 3 or each_limb == 4):
+                portHandlerX = portHandler_2
+            for each_servo in TheoLimbDict[each_limb].ServoList:
+                each_servo.InitialSetup(portHandlerX)
+                each_servo.ToggleTorque(1,portHandlerX,packetHandler)
+                each_servo.Speeds = matrix_speeds[:][each_servo.ID-1]
+        TheoBody.MoveSpineHome(portHandler_3,packetHandler)
+        TheoBody.MoveLegsHome(portHandler_1,portHandler_2,packetHandler)
+        print("\nFinished Moving Home...\n")
         print("Press Enter to start when ready.")
         print("When done, hit Escape.\n")
         while 1:
             if getch() == chr(0x0D):
                 break
-        RunThreads(TheoLimbDict[1],TheoLimbDict[2],portHandler,packetHandler)
+        RunThreads(TheoBody,portHandler_1,portHandler_2,packetHandler)
     elif (desired_action == 2): # Shut down robot, delete object structures, and close documents
         CleanUp(TheoBody,TheoLimbList, ServoObjList)
         ShutDown()
