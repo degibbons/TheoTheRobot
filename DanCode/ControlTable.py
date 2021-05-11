@@ -97,6 +97,8 @@ index = 0
 dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]         # Goal position
 
 LegLimbs = [1, 2, 3, 4]
+# LegLimbs_Fr = [1, 2]
+# LegLimbs_Ba = [3, 4]
 MainBodyLimbs = [5, 6, 7]
 NeckLimb = 5
 SpineLimb = 6

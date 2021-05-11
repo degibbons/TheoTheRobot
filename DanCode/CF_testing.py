@@ -913,7 +913,6 @@ class Body:
         with open('SpeedPosMatching.csv', 'a', newline='') as csvfile:
             DocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
             for x in range(0,51):
-                
                 self.MoveLegs(index,portHandler1,portHandler2,packetHandler,False)
                 if (index[innerIndex] == 0):
                     S_IndexIn = 21
@@ -940,21 +939,32 @@ class Body:
                     print("Stride Number: {sn}".format(sn=self.StrideCount))
                     print("==================================================")
                     limbX.StrideCount += 1
-                isStopped = [0] * len(limbX.ServoList)
-                for i in limbX.IDList:
-                    groupSyncReadMOV.addParam(i)
+                isStopped = [0] * 16
+                for limbX in self.limbs:
+                    if (limbX == 1 or limbX == 2):
+                        for i in limbX.IDList:
+                            groupSyncReadMOV_Fr.addParam(i)
+                    elif (limbX == 3 or limbX == 4):
+                        for i in limbX.IDList:
+                            groupSyncReadMOV_Ba.addParam(i)
                 while 1:
                     # Syncread Moving Value
-                    dxl_comm_result = groupSyncReadMOV.txRxPacket()
-                    if dxl_comm_result != COMM_SUCCESS:
+                    dxl_comm_result_Fr = groupSyncReadMOV_Fr.txRxPacket()
+                    dxl_comm_result_Ba = groupSyncReadMOV_Ba.txRxPacket()
+                    if dxl_comm_result_Fr != COMM_SUCCESS:
                         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                    if dxl_comm_result_Ba != COMM_SUCCESS:
+                        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+                    
                     if (stopVal == 1):
                         print("\nFinishing All Movement.\n")
                         return
 
-                    for count,i in enumerate(limbX.IDList):
-                        # Get Dynamixel#1 present Moving value
-                        dxl_mov = groupSyncReadMOV.getData(i, ADDR_MOVING, LEN_MOVING)               
+                    for count,i in enumerate(list(range(1,17))):
+                        if (i >= 1 and i <= 8):
+                            dxl_mov = groupSyncReadMOV_Fr.getData(i, ADDR_MOVING, LEN_MOVING)
+                        elif (i > 8 and i <= 16):
+                            dxl_mov = groupSyncReadMOV_Ba.getData(i, ADDR_MOVING, LEN_MOVING)
                         if (dxl_mov == 0) and (isStopped[count] == 0):
                             isStopped[count] = 1
 
@@ -963,7 +973,8 @@ class Body:
                     else:
                         DocWriter.writerow(CombinedList)
                         break
-                groupSyncReadMOV.clearParam()
+                groupSyncReadMOV_Fr.clearParam()
+                groupSyncReadMOV_Ba.clearParam()
         print("\nDone Writing! Please Hit Esc.\n\n")
 
     def __del__(self):
