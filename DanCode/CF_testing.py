@@ -789,8 +789,8 @@ class Body:
                     self.GoalPosition_FL.append(FormatSendData(servoX.Positions[P_IndexIn]))
             elif (limbX.LimbNumber == 3):
                 for servoX in limbX.ServoList:
-                    self.GoalVelocity_BL.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
-                    self.GoalPosition_BL.append(FormatSendData(servoX.Positions[P_IndexIn]))
+                    self.GoalVelocity_BR.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
+                    self.GoalPosition_BR.append(FormatSendData(servoX.Positions[P_IndexIn]))
             elif (limbX.LimbNumber == 4):
                 for servoX in limbX.ServoList:
                     self.GoalVelocity_BL.append(FormatSendData(int(servoX.Speeds[S_IndexIn])))
@@ -892,16 +892,16 @@ class Body:
     def MoveLegsHome(self,portHandler1,portHandler2,packetHandler):
         self.MoveLegs(0,portHandler1,portHandler2,packetHandler,True)
         self.IsHome = True
-        for limbX in LegLimbs:
-            print("Moving Limb #{sn} ({nm}) Home. ".format(sn=limbX,nm=LimbNames[i]))
+        for count,limbX in enumerate(LegLimbs):
+            print("Moving Limb #{sn} ({nm}) Home. ".format(sn=limbX,nm=LimbNames[LegLimbs[count]]))
 
     def MoveSpineHome(self,portHandler3,packetHandler):
         self.limbs[4].MoveHome(portHandler3,packetHandler)
         self.limbs[5].MoveHome(portHandler3,packetHandler)
         self.limbs[6].MoveHome(portHandler3,packetHandler)
         self.IsHome = True
-        for limbX in MainBodyLimbs:
-            print("Moving Limb #{sn} ({nm}) Home. ".format(sn=limbX,nm=MainBodyLimbs[i]))
+        for count,limbX in enumerate(MainBodyLimbs):
+            print("Moving Limb #{sn} ({nm}) Home. ".format(sn=limbX,nm=LimbNames[MainBodyLimbs[count]]))
 
     def ContinuousLegsMove(self,portHandler1,portHandler2,packetHandler):
         global stopVal
@@ -989,7 +989,8 @@ def InitialSetup():
     portHandler_1 = PortHandler(DEVICENAME_1)
     portHandler_2 = PortHandler(DEVICENAME_2)
     portHandler_3 = PortHandler(DEVICENAME_3)
-    portHandler_4 = PortHandler(DEVICENAME_4)
+    # portHandler_4 = PortHandler(DEVICENAME_4)
+    portHandler_4 = 0
 
     # Initialize PacketHandler instance
     # Set the protocol version
@@ -1023,14 +1024,14 @@ def InitialSetup():
         getch() # pylint: disable=undefined-variable
         return
 
-    # Open port
-    if portHandler_4.openPort():
-        print("Succeeded to open the port")
-    else:
-        print("Failed to open the port")
-        print("Press any key to terminate...")
-        getch() # pylint: disable=undefined-variable
-        return
+    # # Open port
+    # if portHandler_4.openPort():
+    #     print("Succeeded to open the port")
+    # else:
+    #     print("Failed to open the port")
+    #     print("Press any key to terminate...")
+    #     getch() # pylint: disable=undefined-variable
+    #     return
 
     # Set port baudrate
     if portHandler_1.setBaudRate(BAUDRATE):
@@ -1059,14 +1060,14 @@ def InitialSetup():
         getch() # pylint: disable=undefined-variable
         return
     
-    # Set port baudrate
-    if portHandler_4.setBaudRate(BAUDRATE):
-        print("Succeeded to change the baudrate")
-    else:
-        print("Failed to change the baudrate")
-        print("Press any key to terminate...")
-        getch() # pylint: disable=undefined-variable
-        return
+    # # Set port baudrate
+    # if portHandler_4.setBaudRate(BAUDRATE):
+    #     print("Succeeded to change the baudrate")
+    # else:
+    #     print("Failed to change the baudrate")
+    #     print("Press any key to terminate...")
+    #     getch() # pylint: disable=undefined-variable
+    #     return
 
     return portHandler_1, portHandler_2, portHandler_3, portHandler_4, packetHandler
 
@@ -1479,7 +1480,9 @@ def PingServos():
     # Initialize PortHandler instance
     # Set the port path
     # Get methods and members of PortHandlerLinux or PortHandlerWindows
-    portHandler = PortHandler(DEVICENAME_1)
+    portHandler1 = PortHandler(DEVICENAME_1)
+    portHandler2 = PortHandler(DEVICENAME_2)
+    portHandler3 = PortHandler(DEVICENAME_3)
 
     # Initialize PacketHandler instance
     # Set the protocol version
@@ -1487,7 +1490,7 @@ def PingServos():
     packetHandler = PacketHandler(PROTOCOL_VERSION)
 
     # Open port
-    if portHandler.openPort():
+    if portHandler1.openPort():
         print("Succeeded to open the port")
     else:
         print("Failed to open the port")
@@ -1497,7 +1500,45 @@ def PingServos():
 
 
     # Set port baudrate
-    if portHandler.setBaudRate(BAUDRATE):
+    if portHandler1.setBaudRate(BAUDRATE):
+        print("Succeeded to change the baudrate")
+    else:
+        print("Failed to change the baudrate")
+        print("Press any key to terminate...")
+        getch()
+        return
+
+    # Open port
+    if portHandler2.openPort():
+        print("Succeeded to open the port")
+    else:
+        print("Failed to open the port")
+        print("Press any key to terminate...")
+        getch()
+        return
+
+
+    # Set port baudrate
+    if portHandler2.setBaudRate(BAUDRATE):
+        print("Succeeded to change the baudrate")
+    else:
+        print("Failed to change the baudrate")
+        print("Press any key to terminate...")
+        getch()
+        return
+
+    # Open port
+    if portHandler3.openPort():
+        print("Succeeded to open the port")
+    else:
+        print("Failed to open the port")
+        print("Press any key to terminate...")
+        getch()
+        return
+
+
+    # Set port baudrate
+    if portHandler3.setBaudRate(BAUDRATE):
         print("Succeeded to change the baudrate")
     else:
         print("Failed to change the baudrate")
@@ -1506,22 +1547,40 @@ def PingServos():
         return
 
     # Try to broadcast ping the Dynamixel
-    dxl_data_list, dxl_comm_result = packetHandler.broadcastPing(portHandler)
+    dxl_data_list_1, dxl_comm_result = packetHandler.broadcastPing(portHandler1)
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+    dxl_data_list_2, dxl_comm_result = packetHandler.broadcastPing(portHandler2)
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+    dxl_data_list_3, dxl_comm_result = packetHandler.broadcastPing(portHandler3)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
 
     print("Detected Dynamixel :")
-    for dxl_id in dxl_data_list:
-        print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list.get(dxl_id)[0], dxl_data_list.get(dxl_id)[1]))
-
+    for dxl_id in dxl_data_list_1:
+        print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list_1.get(dxl_id)[0], dxl_data_list_1.get(dxl_id)[1]))
+    for dxl_id in dxl_data_list_2:
+        print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list_2.get(dxl_id)[0], dxl_data_list_2.get(dxl_id)[1]))
+    for dxl_id in dxl_data_list_3:
+        print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list_3.get(dxl_id)[0], dxl_data_list_3.get(dxl_id)[1]))
     # Close port
-    portHandler.closePort() 
-
+    portHandler1.closePort() 
+    portHandler2.closePort() 
+    portHandler3.closePort() 
+    dxl_data_list = {**dxl_data_list_1, **dxl_data_list_2, **dxl_data_list_3}
     return dxl_data_list
     
-def CleanUp(BodyObj,LimbObjList,ServoObjList):
-    for each_servo in ServoObjList:
-        each_servo.ToggleTorque(0,each_servo.portHandler,each_servo.packetHandler)
+def CleanUp(BodyObj,LimbObjList,ServoObjList,portHandler1,portHandler2,portHandler3,packetHandler):
+    for count,each_servo in enumerate(ServoObjList):
+        if (count >= 1 and count<=8):
+            each_servo.ToggleTorque(0,portHandler1,packetHandler)
+        elif (count >=9 and count <= 16):
+            each_servo.ToggleTorque(0,portHandler2,packetHandler)
+        elif (count >= 17 and count <= 24):
+            each_servo.ToggleTorque(0,portHandler3,packetHandler)
     BodyObj.__del__()
     for each_limb in LimbObjList:
         each_limb.__del__()
@@ -1544,7 +1603,10 @@ def AssembleRobot(PositionsArray):
     dxl_data_list = PingServos()
     for dxl_id in dxl_data_list:
         print("[ID:%03d] Detected" % (dxl_id))
-        RelativeServo = Servo(dxl_id,PositionsArray[dxl_id-1][:])
+        if dxl_id >= 1 and dxl_id <= 16:
+            RelativeServo = Servo(dxl_id,PositionsArray[dxl_id-1][:])
+        else:
+            RelativeServo = Servo(dxl_id,[2048])
         ServoObjList.append(RelativeServo)
         ServoObjDict[dxl_id] = RelativeServo
 

@@ -66,7 +66,7 @@ while 1:
                 break
         RunThreads(TheoBody,portHandler_1,portHandler_2,packetHandler)
     elif (desired_action == 2): # Shut down robot, delete object structures, and close documents
-        CleanUp(TheoBody,TheoLimbList, ServoObjList)
+        CleanUp(TheoBody,TheoLimbList, ServoObjList,portHandler_1,portHandler_2,portHandler_3,packetHandler)
         ShutDown()
         break
     else:
