@@ -25,18 +25,20 @@ else:
         return ch
 
 [portHandler_1, portHandler_2, portHandler_3, portHandler_4, packetHandler] = InitialSetup()              # Uses Dynamixel SDK library
-
+print("\nPort Handler's Have Been Initiated\n")
 
 (FL_TOT_R_1, FL_TOT_R_2, FL_TOT_R_3, FL_TOT_R_4, FL_TOT_L_1, FL_TOT_L_2, FL_TOT_L_3, FL_TOT_L_4,
  HL_TOT_R_1, HL_TOT_R_2, HL_TOT_R_3, HL_TOT_R_4, HL_TOT_L_1, HL_TOT_L_2, HL_TOT_L_3, HL_TOT_L_4) = ReadServoAngles(PositionsFile)
+print("Servo EXCEL data has been read.")
 
 PositionsMatrix = PostProcessPositions(FL_TOT_R_1, FL_TOT_R_2, FL_TOT_R_3, FL_TOT_R_4, FL_TOT_L_1, FL_TOT_L_2, FL_TOT_L_3, FL_TOT_L_4,
  HL_TOT_R_1, HL_TOT_R_2, HL_TOT_R_3, HL_TOT_R_4, HL_TOT_L_1, HL_TOT_L_2, HL_TOT_L_3, HL_TOT_L_4)
+print("Created Positions Matrix.")
 
-[ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody] = AssembleRobot(PositionsMatrix)
+[ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody] = AssembleRobot(PositionsMatrix,portHandler_1,portHandler_2,portHandler_3,packetHandler)
 #desired_servo_limb = 1
 while 1:
-    desired_action = int(input("Run Test Protocol?(1) or Shutdown Sequence?(2):"))
+    desired_action = int(input("Run Test Protocol?(1), Shutdown Sequence?(2), or Reboot All(3):"))
     if (desired_action == 1):
         print("Running Auto Continuous Move Protocol...\n")
         matrix_speeds = SpeedMerge(PositionsMatrix)
@@ -69,6 +71,14 @@ while 1:
         CleanUp(TheoBody,TheoLimbList, ServoObjList,portHandler_1,portHandler_2,portHandler_3,packetHandler)
         ShutDown()
         break
+    elif (desired_action == 3): # Reboot all servos
+        for i in list(range(1,25)):
+            if (i>=1 and i<=8):
+                ServoObjDict[i].RebootServo(portHandler_1,packetHandler)
+            elif (i>=9 and i<=16):
+                ServoObjDict[i].RebootServo(portHandler_2,packetHandler)
+            elif (i>= 17 and i<= 24):
+                ServoObjDict[i].RebootServo(portHandler_3,packetHandler)
     else:
         print("That's not a recognized option, please try again.\n")
         continue

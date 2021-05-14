@@ -178,7 +178,7 @@ class Servo:
                     break
             index += 1
 
-    def RebootServo(self,portHandler):
+    def RebootServo(self,portHandler,packetHandler):
         import os
 
         if os.name == 'nt':
@@ -198,36 +198,36 @@ class Servo:
                     termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 return ch
 
-        # Open port
-        if self.portHandler.openPort():
-            print("Succeeded to open the port")
-        else:
-            print("Failed to open the port")
-            print("Press any key to terminate...")
-            getch()
-            return
+        # # Open port
+        # if portHandler.openPort():
+        #     print("Succeeded to open the port")
+        # else:
+        #     print("Failed to open the port")
+        #     print("Press any key to terminate...")
+        #     getch()
+        #     return
 
-        # Set port baudrate
-        if self.portHandler.setBaudRate(BAUDRATE):
-            print("Succeeded to change the baudrate")
-        else:
-            print("Failed to change the baudrate")
-            print("Press any key to terminate...")
-            getch()
-            return
+        # # Set port baudrate
+        # if portHandler.setBaudRate(BAUDRATE):
+        #     print("Succeeded to change the baudrate")
+        # else:
+        #     print("Failed to change the baudrate")
+        #     print("Press any key to terminate...")
+        #     getch()
+        #     return
 
-        # Trigger
-        print("Press any key to reboot")
-        getch()
+        # # Trigger
+        # print("Press any key to reboot")
+        # getch()
 
         print("See the Dynamixel LED flickering")
         # Try reboot
         # Dynamixel LED will flicker while it reboots
-        dxl_comm_result, dxl_error = self.packetHandler.reboot(self.portHandler, self.ID)
+        dxl_comm_result, dxl_error = packetHandler.reboot(portHandler, self.ID)
         if dxl_comm_result != COMM_SUCCESS:
-            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
         elif dxl_error != 0:
-            print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+            print("%s" % packetHandler.getRxPacketError(dxl_error))
 
         print("[ID:%03d] reboot Succeeded\n" % self.ID)
 
@@ -856,6 +856,8 @@ class Body:
                     if dxl_addparam_result != True:
                         print("[ID:%03d] groupSyncWrite addparam failed" % servoX.ID)
                         return
+            else:
+                pass
             index += 1
 
             # Syncwrite goal velocity
@@ -908,43 +910,45 @@ class Body:
         # Initialize GroupSyncRead instace for Present Position
         groupSyncReadMOV_Fr = GroupSyncRead(portHandler1, packetHandler, ADDR_MOVING, LEN_MOVING)
         groupSyncReadMOV_Ba = GroupSyncRead(portHandler2, packetHandler, ADDR_MOVING, LEN_MOVING)
-        index = [1] * len(self.limbs)
-        innerIndex = 0
+        #index = [1] * len(self.limbs)
+        index = 1
+        #innerIndex = 0
         with open('SpeedPosMatching.csv', 'a', newline='') as csvfile:
             DocWriter = csv.writer(csvfile, delimiter=',',quoting=csv.QUOTE_MINIMAL)
             for x in range(0,51):
                 self.MoveLegs(index,portHandler1,portHandler2,packetHandler,False)
-                if (index[innerIndex] == 0):
+                if (index == 0):
                     S_IndexIn = 21
                 else:
-                    S_IndexIn = index[innerIndex]-1
+                    S_IndexIn = index-1
                 P_IndexIn = index
                 PositionList = []
                 SpeedList = []
-                for b in limbX.ServoList:
-                    Pos_num = b.Positions[P_IndexIn]
-                    Sp_num = int(b.Speeds[S_IndexIn])
-                    PositionList.append(Pos_num)
-                    SpeedList.append(Sp_num)
-                CombinedList = list(zip(PositionList,SpeedList))
-                for limbX in self.limbs:
+                for limbX in self.limbs[0:3]:
+                    for b in limbX.ServoList:
+                        Pos_num = b.Positions[P_IndexIn]
+                        Sp_num = int(b.Speeds[S_IndexIn])
+                        PositionList.append(Pos_num)
+                        SpeedList.append(Sp_num)
+                    CombinedList = list(zip(PositionList,SpeedList))
+                for limbX in self.limbs[0:3]:
                     print("-------------------------")
                     print("Index Movement for limb {lnum} is: {ind}".format(ind = index, lnum = limbX.LimbNumber))
                     print("-------------------------")
-                index[innerIndex] += 1
-                if (index[innerIndex] > 21): 
-                    index[innerIndex] = 0
-                elif (index[innerIndex] == 1):
+                index += 1
+                if (index > 21): 
+                    index = 0
+                elif (index == 1):
                     print("==================================================")
                     print("Stride Number: {sn}".format(sn=self.StrideCount))
                     print("==================================================")
                     limbX.StrideCount += 1
                 isStopped = [0] * 16
-                for limbX in self.limbs:
-                    if (limbX == 1 or limbX == 2):
+                for count,limbX in enumerate(self.limbs[0:3]):
+                    if (count == 0 or count == 1):
                         for i in limbX.IDList:
                             groupSyncReadMOV_Fr.addParam(i)
-                    elif (limbX == 3 or limbX == 4):
+                    elif (count == 2 or count == 3):
                         for i in limbX.IDList:
                             groupSyncReadMOV_Ba.addParam(i)
                 while 1:
@@ -999,7 +1003,7 @@ def InitialSetup():
 
     # Open port
     if portHandler_1.openPort():
-        print("Succeeded to open the port")
+        print("Succeeded to open the port (#1)")
     else:
         print("Failed to open the port")
         print("Press any key to terminate...")
@@ -1008,7 +1012,7 @@ def InitialSetup():
 
     # Open port
     if portHandler_2.openPort():
-        print("Succeeded to open the port")
+        print("Succeeded to open the port (#2)")
     else:
         print("Failed to open the port")
         print("Press any key to terminate...")
@@ -1017,7 +1021,7 @@ def InitialSetup():
 
     # Open port
     if portHandler_3.openPort():
-        print("Succeeded to open the port")
+        print("Succeeded to open the port (#3)")
     else:
         print("Failed to open the port")
         print("Press any key to terminate...")
@@ -1035,7 +1039,7 @@ def InitialSetup():
 
     # Set port baudrate
     if portHandler_1.setBaudRate(BAUDRATE):
-        print("Succeeded to change the baudrate")
+        print("Succeeded to change the baudrate for port 1")
     else:
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
@@ -1044,7 +1048,7 @@ def InitialSetup():
 
     # Set port baudrate
     if portHandler_2.setBaudRate(BAUDRATE):
-        print("Succeeded to change the baudrate")
+        print("Succeeded to change the baudrate for port 2")
     else:
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
@@ -1053,7 +1057,7 @@ def InitialSetup():
 
     # Set port baudrate
     if portHandler_3.setBaudRate(BAUDRATE):
-        print("Succeeded to change the baudrate")
+        print("Succeeded to change the baudrate for port 3")
     else:
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
@@ -1459,7 +1463,7 @@ def PrintOptionsSubmenu():
     print("11: Reset specified servo(s)")
     print("12: Test ping outer apparatuses\n")
 
-def PingServos():
+def PingServos(portHandler1,portHandler2,portHandler3,packetHandler):
     import os
 
     if os.name == 'nt':
@@ -1477,9 +1481,9 @@ def PingServos():
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
             return ch
-    # Initialize PortHandler instance
-    # Set the port path
-    # Get methods and members of PortHandlerLinux or PortHandlerWindows
+    #Initialize PortHandler instance
+    #Set the port path
+    #Get methods and members of PortHandlerLinux or PortHandlerWindows
     portHandler1 = PortHandler(DEVICENAME_1)
     portHandler2 = PortHandler(DEVICENAME_2)
     portHandler3 = PortHandler(DEVICENAME_3)
@@ -1550,15 +1554,18 @@ def PingServos():
     dxl_data_list_1, dxl_comm_result = packetHandler.broadcastPing(portHandler1)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-
+        print("Red")
+    time.sleep(1)
     dxl_data_list_2, dxl_comm_result = packetHandler.broadcastPing(portHandler2)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-
+        print("Blue")
+    time.sleep(1)
     dxl_data_list_3, dxl_comm_result = packetHandler.broadcastPing(portHandler3)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-
+        print("Green")
+    time.sleep(1)
     print("Detected Dynamixel :")
     for dxl_id in dxl_data_list_1:
         print("[ID:%03d] model version : %d | firmware version : %d" % (dxl_id, dxl_data_list_1.get(dxl_id)[0], dxl_data_list_1.get(dxl_id)[1]))
@@ -1597,10 +1604,10 @@ def SpeedMerge(PositionsMatrix):
     TotMatrix_speeds = DetermineSpeeds(desired_timespan,PositionsMatrix)
     return TotMatrix_speeds
 
-def AssembleRobot(PositionsArray):
+def AssembleRobot(PositionsArray,portHandler1,portHandler2,portHandler3,packetHandler):
     ServoObjList = []
     ServoObjDict = {}
-    dxl_data_list = PingServos()
+    dxl_data_list = PingServos(portHandler1,portHandler2,portHandler3,packetHandler)
     for dxl_id in dxl_data_list:
         print("[ID:%03d] Detected" % (dxl_id))
         if dxl_id >= 1 and dxl_id <= 16:
@@ -1650,53 +1657,55 @@ def AssembleRobot(PositionsArray):
             FR_Leg = Leg(1,FR_Limb)
             TheoLimbList.append(FR_Leg)
             TheoLimbDict[1] = FR_Leg
-            print("Front Right Limb is Digitally Assembled.")
+            print("Front Right Limb is Digitally Assembled. (1)")
             FR_limbCount = 0
         if (FL_limbCount == 4):
             FL_Limb = [ServoObjDict[5],ServoObjDict[6],ServoObjDict[7],ServoObjDict[8]]
             FL_Leg = Leg(2,FL_Limb)
             TheoLimbList.append(FL_Leg)
             TheoLimbDict[2] = FL_Leg
-            print("Front Left Limb is Digitally Assembled.")
+            print("Front Left Limb is Digitally Assembled. (2)")
             FL_limbCount = 0
         if (BR_limbCount == 4):
             BR_Limb = [ServoObjDict[9],ServoObjDict[10],ServoObjDict[11],ServoObjDict[12]]
             BR_Leg = Leg(3,BR_Limb)
             TheoLimbList.append(BR_Leg)
             TheoLimbDict[3] = BR_Leg
-            print("Back Right Limb is Digitally Assembled.")
+            print("Back Right Limb is Digitally Assembled. (3)")
             BR_limbCount = 0
         if (BL_limbCount == 4):
             BL_Limb = [ServoObjDict[13],ServoObjDict[14],ServoObjDict[15],ServoObjDict[16]]
             BL_Leg = Leg(4,BL_Limb)
             TheoLimbList.append(BL_Leg)
             TheoLimbDict[4] = BL_Leg
-            print("Back Left Limb is Digitally Assembled.")
+            print("Back Left Limb is Digitally Assembled. (4)")
             BL_limbCount = 0
         if (Neck_limbCount == 2):
             Neck_Limb = [ServoObjDict[17],ServoObjDict[18]]
             NeckStructure = Neck(5,Neck_Limb)
             TheoLimbList.append(NeckStructure)
             TheoLimbDict[5] = NeckStructure
-            print("Neck Limb is Digitally Assembled.")
+            print("Neck Limb is Digitally Assembled. (5)")
             Neck_limbCount = 0
         if (Spine_limbCount == 4):
             Spine_Limb = [ServoObjDict[19],ServoObjDict[20],ServoObjDict[21],ServoObjDict[22]]
             SpineStructure = Spine(6,Spine_Limb)
             TheoLimbList.append(SpineStructure)
             TheoLimbDict[6] = SpineStructure
-            print("Spine Limb is Digitally Assembled.")
+            print("Spine Limb is Digitally Assembled. (6)")
             Spine_limbCount = 0
         if (Tail_limbCount == 2):
             Tail_Limb = [ServoObjDict[23],ServoObjDict[24]]
             TailStructure = Tail(7,Tail_Limb)
             TheoLimbList.append(TailStructure)
             TheoLimbDict[7] = TailStructure
-            print("Tail Limb is Digitally Assembled.")
+            print("Tail Limb is Digitally Assembled. (7)")
             Tail_limbCount = 0
 
     TheoBody = Body(TheoLimbList)
+    print("\n-----------------------------------------")
     print("Body Structure Digitally Assembled.\n")
+    print("-----------------------------------------\n")
 
     return ServoObjList, ServoObjDict, TheoLimbList, TheoLimbDict, TheoBody
 
